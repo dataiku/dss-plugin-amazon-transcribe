@@ -1,11 +1,11 @@
 {
-    "id": "your-plugin-id",
+    "id": "dss-plugin-amazon-transcribe",
     "version": "0.1.0",
     "meta": {
-        "label": "Plugin template - Replace by your plugin label",
-        "category": "Your category (optional)",
-        "description": "Your description (keep it short and simple)",
-        "author": "Organization (firstName LASTNAME)",
+        "label": "Amazon Transcribe",
+        "category": "",
+        "description": "Amazon Transcribe plugin. The plugin takes audio files from a folder connected to Amazon S3 and make its transcription through Amazon Transcribe.",
+        "author": "Dataiku (Jeremy PLASSMANN)",
         "icon": "icon-font-awesome-3.2.1",
         "licenseInfo": "Apache Software License",
         "url": "https://www.dataiku.com/product/plugins/your-plugin-id/",
