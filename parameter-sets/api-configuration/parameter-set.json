@@ -1,0 +1,93 @@
+/* This file is the descriptor for the parameter set api-configuration */
+{
+    "meta": {
+        // label: name of the parameter set as displayed, should be short
+        "label": "API configuration",
+        // description: longer string to help end users understand what these parameter correspond to
+        "description": "",
+        // icon: must be one of the FontAwesome 3.2.1 icons, complete list here at https://fontawesome.com/v3.2.1/icons/
+        "icon": "icon-puzzle-piece"
+    },
+    /* if users are allowed to fill the values for an instance of this parameter
+       set directly in the plugin component using it, as opposed to only be allowed
+       to select already defined presets (default value, can be changed in plugin
+       settings)
+    */
+    "defaultDefinableInline": true,
+    /* if users are allowed to define presets at the project level in addition
+       to the instance level (default value, can be changed in plugin settings) */
+    "defaultDefinableAtProjectLevel": true,
+    /* The field "params" holds a list of all the params
+       for which the user will be prompted for values. The ones in
+       pluginParams relate to plugin settings (ie instance-level)
+       and the ones in params relate to element settings (ie recipe,
+       dataset, ...)
+
+       The values given by the user will override/complete the ones
+       set by the user in the element's (dataset, recipe,...) config.
+
+       To make parameters not visible in the element's config,
+       define them here but not in the element's json.
+
+       The available parameter types include:
+       STRING, STRINGS, INT, DOUBLE, BOOLEAN, SELECT, MULTISELECT, MAP, TEXTAREA,
+       PRESET, DATASET, DATASET_COLUMN, MANAGED_FOLDER, CREDENTIAL_REQUEST
+
+       For the full list and for more details, see the documentation: https://doc.dataiku.com/dss/latest/plugins/reference/params.html
+    */
+    "pluginParams": [
+        {
+            "name": "parameter1",
+            "label": "User-readable name",
+            "type": "STRING",
+            "description": "Some documentation for parameter1",
+            "mandatory": true
+        }
+    ],
+    "params": [
+        {
+            "name": "separator_authentification",
+            "label": "Authentification",
+            "type": "SEPARATOR",
+            "description": "Please refer to the Amazon documentation: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys"
+        },
+        {
+            "name": "aws_access_key_id",
+            "label": "AWS access key id",
+            "description": "AWS access key as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "type": "STRING",
+            "mandatory": false
+        },
+        {
+            "name": "aws_secret_access_key",
+            "label": "AWS secret access key",
+            "description": "AWS secret access key as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "type": "PASSWORD",
+            "mandatory": false
+        },
+        {
+            "name": "aws_session_token",
+            "label": "AWS session token",
+            "description": "Optional AWS session token as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "type": "STRING",
+            "mandatory": false
+        },
+        {
+            "name": "aws_region_name",
+            "label": "AWS region name",
+            "description": "AWS region name as a string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables).",
+            "type": "STRING",
+            "mandatory": false
+        },
+        {
+            "name": "max_attempts",
+            "label": "Maximum Attempts",
+            "description": "Maximum number of retry attempts when an API request fails.",
+            "type": "INT",
+            "mandatory": true,
+            "defaultValue": 5,
+            "minI": 1,
+            "maxI": 100
+        }
+    ]
+}
