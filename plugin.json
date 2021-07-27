@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "meta": {
         "label": "Amazon Transcribe",
-        "category": "",
+        "category": "nlp",
         "description": "Amazon Transcribe plugin. The plugin takes audio files from a folder connected to Amazon S3 and make its transcription through Amazon Transcribe.",
         "author": "Dataiku (Jeremy PLASSMANN)",
         "icon": "icon-font-awesome-3.2.1",
