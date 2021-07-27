@@ -84,6 +84,7 @@ class AWSTranscribeAPIWrapper:
                                 row: Dict = None,
                                 folder_bucket: AnyStr = "",
                                 folder_root_path: AnyStr = "",
+                                job_id: AnyStr = "",
                                 **kwargs,
                                 ):
         audio_path = row[PATH_COLUMN]
