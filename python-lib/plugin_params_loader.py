@@ -53,6 +53,7 @@ class PluginParams:
             output_folder_bucket: AnyStr = "",
             output_folder_root_path: AnyStr = "",
             language: AnyStr = "auto",
+            display_json: bool = False,
             api_quota_rate_limit: int = 1800,
             api_quota_period: int = 60,
             batch_support: bool = False,

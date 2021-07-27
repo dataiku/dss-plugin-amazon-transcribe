@@ -5,15 +5,18 @@ import logging
 import os
 import random
 import json
+import time
 
 from typing import AnyStr, Dict, Tuple, Callable
 
 import boto3
+import pandas as pd
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError
 from botocore.exceptions import ClientError
 from botocore.exceptions import NoRegionError
 
+from language_dict import SUPPORTED_LANGUAGES
 from plugin_io_utils import PATH_COLUMN
 
 # ==============================================================================
@@ -89,7 +92,7 @@ class AWSTranscribeAPIWrapper:
                                 ):
         audio_path = row[PATH_COLUMN]
         file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
-        job_name = f'{file_name}_{random.randint(1000, 9999)}'
+        job_name = f'{job_id}_{file_name}_{random.randint(1000, 9999)}'
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
@@ -105,45 +108,6 @@ class AWSTranscribeAPIWrapper:
         response = self.client.start_transcription_job(**transcribe_request)
         return response["TranscriptionJob"]["TranscriptionJobName"]
 
-    # def start_transcription_job(self,
-    #                             job_name: AnyStr,
-    #                             filepath: AnyStr,
-    #                             language: AnyStr,
-    #                             folder_bucket: AnyStr,
-    #                             folder_root_path: AnyStr,
-    #                             output_bucket_name: AnyStr,
-    #                             output_key: AnyStr
-    #                             ):
-    #     """
-    #         Calls Amazon Transcribe API to start a transcription job.
-    #         """
-    #     # control that there is an extension to the file
-    #     if not isinstance(filepath, str) or not isinstance(job_name, str):
-    #         return {}, None
-    #     else:
-    #         filename, file_extension = os.path.splitext(filepath)
-    #         file_extension = file_extension[1:]
-    #         print(job_name, filepath, file_extension, language)
-    #
-    #         transcribe_request = {
-    #             "TranscriptionJobName": job_name,
-    #             "Media": {'MediaFileUri': f's3://{folder_bucket}/{folder_root_path}/{filename}.{file_extension}'},
-    #             "MediaFormat": file_extension,
-    #             "IdentifyLanguage": (language=="auto"),
-    #             "OutputBucketName": folder_bucket,
-    #             "OutputKey": f'{folder_root_path}/response/'
-    #         }
-    #
-    #         response = self.client.start_transcription_job(
-    #             TranscriptionJobName=job_name,
-    #             Media={'MediaFileUri': filepath},
-    #             MediaFormat=file_extension,
-    #             # LanguageCode=language if language != "auto" else "Null",
-    #             IdentifyLanguage=(language == "auto"),
-    #             OutputBucketName=output_bucket_name,  # "jplassmann-transcribe-plugin",
-    #             OutputKey=output_key[1:]  # "dataiku/DKU_TUTORIAL_BASICS_101/D5fSP1od/results/"
-    #         )
-    #         return response["TranscriptionJob"], f"s3://{output_bucket_name}{output_key}{job_name}.json"
 
     def get_transcription_job(self,
                               job_name: AnyStr
@@ -159,7 +123,7 @@ class AWSTranscribeAPIWrapper:
                       status: AnyStr
                       ):
 
-        response = self.client.ListTranscriptionjobs(
+        response = self.client.list_transcription_jobs(
             JobNameContains=job_name_contains,
             Status=status
         )
@@ -168,7 +132,7 @@ class AWSTranscribeAPIWrapper:
         result = response.get("TranscriptionJobSummaries", [])
 
         while next_token is not None:
-            response = self.client.ListTranscriptionjobs(
+            response = self.client.list_transcription_jobs(
                 JobNameContains=job_name_contains,
                 Status=status,
                 NextToken=next_token
@@ -177,4 +141,30 @@ class AWSTranscribeAPIWrapper:
             result += response.get("TranscriptionJobSummaries", [])
             next_token = response.get("NextToken", None)
 
-        return response
+        return result
+
+    def get_results(self, submitted_jobs, recipe_job_id, display_json, function, **kwargs):
+        folder = kwargs["folder"]
+        res = {}
+        while len(submitted_jobs) != len(res):
+
+            jobs = self.get_list_jobs(recipe_job_id, self.COMPLETED)
+            for job in jobs:
+                job_name = job.get("TranscriptionJobName")
+                if job_name not in res:
+                    json_results = function(folder, job_name)
+                    job_data = {
+                        "AWS_transcribe_job_name": job_name,
+                        "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
+                        "language_code": job.get("LanguageCode"),
+                        "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+                    }
+                    if display_json:
+                        job_data["json"] = json_results
+
+                    res[job_name] = job_data
+
+            time.sleep(5)
+
+        df = pd.DataFrame.from_dict(res, orient='index')
+        return df
