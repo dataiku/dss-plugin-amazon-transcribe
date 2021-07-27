@@ -33,5 +33,6 @@ SUPPORTED_LANGUAGES = {
     "ru-RU": "Russian",
     "ta-IN": "Tamil",
     "te-IN": "Telugu",
+    "tr-TR": "Turkish"
 }
 """Supported languages for the Text Detection API for images and documents"""

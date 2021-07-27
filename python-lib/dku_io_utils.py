@@ -78,3 +78,5 @@ def set_column_description(
                 output_col_info["comment"] = matched_comment[0]
     output_dataset.write_schema(output_dataset_schema)
 
+def read_json_from_folder(input_folder: dataiku.Folder, job_name: AnyStr):
+    return input_folder.read_json(f"response/{job_name}.json")

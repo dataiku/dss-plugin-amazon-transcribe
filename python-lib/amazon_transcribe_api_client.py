@@ -32,6 +32,10 @@ class AWSTranscribeAPIWrapper:
 
     SUPPORTED_AUDIO_FORMATS = ["flac", "mp3", "mp4", "ogg", "webm", "amr", "wav"]
     API_EXCEPTIONS = (ClientError, BotoCoreError)
+    COMPLETED = "COMPLETED"
+    QUEUED = "QUEUED"
+    IN_PROGRESS = "IN_PROGRESS"
+    FAILED = "FAILED"
 
     def __init__(self,
                  aws_access_key_id=None,
@@ -159,4 +163,17 @@ class AWSTranscribeAPIWrapper:
             Status=status
         )
 
-        return response.get("TranscriptionJobSummaries", [])
+        next_token = response.get("NextToken", None)
+        result = response.get("TranscriptionJobSummaries", [])
+
+        while next_token is not None:
+            response = self.client.ListTranscriptionjobs(
+                JobNameContains=job_name_contains,
+                Status=status,
+                NextToken=next_token
+            )
+
+            result += response.get("TranscriptionJobSummaries", [])
+            next_token = response.get("NextToken", None)
+
+        return response
