@@ -46,7 +46,7 @@ class AWSTranscribeAPIWrapper:
                  max_attempts: int = 20
                  ):
         """
-        Gets a translation API client from AWS credentials.
+        Initialize the client by creating an AWS client with the specified credentials.
         """
         # Try to ascertain credentials from environment
         if aws_access_key_id is None or aws_access_key_id == "":
@@ -116,6 +116,12 @@ class AWSTranscribeAPIWrapper:
     def get_transcription_job(self,
                               job_name: AnyStr
                               ):
+        """
+        Get the full information of a specific job. (not used, as we prefer batch processing)
+
+        Returns:
+            Dictionary representing the job.
+        """
         # deal with errors in case job_name does not exists
         response = self.client.get_transcription_job(
             TranscriptionJobName=job_name
@@ -126,6 +132,14 @@ class AWSTranscribeAPIWrapper:
                       job_name_contains: AnyStr,
                       status: AnyStr
                       ) -> List[Dict]:
+        """
+        Get the list of jobs that contains "job_name_contains" in the job name and has a specific status.
+        The AWS API will give a list of jobs with at most 100 jobs, to get more than that, we have to go
+        through the other pages by precising the NextToken argument to the next call of the API.
+
+        Returns:
+            list of dictionary representing a summary of the jobs
+        """
 
         response = self.client.list_transcription_jobs(
             JobNameContains=job_name_contains,
@@ -153,6 +167,19 @@ class AWSTranscribeAPIWrapper:
                     display_json: bool,
                     function: Callable,
                     **kwargs):
+
+        """
+        Create a Pandas DataFrame with the results of the different submitted jobs.
+        This function is supposed to read json files contained in an S3 bucket.
+        The function argument is the function to read the json in a Dataiku Folder and
+        the Folder object will be given in kwargs argument. This form is easier to test
+        and to create a module that has no dependence with dataiku.
+
+        Returns:
+            DataFrame containing the transcript, the language, the job name, full json if requested
+            and an error if the job failed.
+
+        """
 
         folder = kwargs["folder"]
         res = {}
