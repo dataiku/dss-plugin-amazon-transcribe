@@ -97,6 +97,8 @@ class AWSTranscribeAPIWrapper:
         """
         audio_path = row[PATH_COLUMN]
         file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
+
+        # Generate a unique job_name for AWS Transcribe
         NB_DIGIT_AWS_JOB_ID = 5
         aws_job_id = str(random.randint(10 ** NB_DIGIT_AWS_JOB_ID, 10 ** (NB_DIGIT_AWS_JOB_ID + 1) - 1))
         job_name = f'{job_id}_{aws_job_id}_{file_name}'
@@ -144,14 +146,17 @@ class AWSTranscribeAPIWrapper:
             list of dictionary representing a summary of the jobs
         """
 
+        # First request of the list of jobs
         response = self.client.list_transcription_jobs(
             JobNameContains=job_name_contains,
             Status=status
         )
 
+        # If next_token is not None, it means there are more than one page, so we have to loop over them
         next_token = response.get("NextToken", None)
         result = response.get("TranscriptionJobSummaries", [])
 
+        # Loop over the next pages to get all jobs
         while next_token is not None:
             response = self.client.list_transcription_jobs(
                 JobNameContains=job_name_contains,
@@ -165,7 +170,7 @@ class AWSTranscribeAPIWrapper:
         return result
 
     def get_results(self,
-                    submitted_jobs,
+                    submitted_jobs: pd.DataFrame,
                     recipe_job_id: AnyStr,
                     display_json: bool,
                     function: Callable,
@@ -184,20 +189,29 @@ class AWSTranscribeAPIWrapper:
 
         """
 
+        # dataiku folder or custom folder for testing
         folder = kwargs["folder"]
+
+        # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
+        #                             ...,
+        #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
         res = {}
         while len(submitted_jobs) != len(res):
 
             completed_jobs = self.get_list_jobs(recipe_job_id, self.COMPLETED)
             failed_jobs = self.get_list_jobs(recipe_job_id, self.FAILED)
+
+            # loop over all the finished jobs whether they completed with success or failed
             for job in completed_jobs + failed_jobs:
                 job_name = job.get("TranscriptionJobName")
                 job_status = job.get("TranscriptionJobStatus")
                 if job_name not in res:
                     if job_status == self.COMPLETED:
+
+                        # Result json is being read by function. The Transcript will be there.
                         json_results = function(folder, job_name)
                         job_data = {
-                            "AWS_transcribe_job_name": job_name,
+                            "job_name": job_name,
                             "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
                             "language_code": job.get("LanguageCode"),
                             "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
@@ -208,6 +222,7 @@ class AWSTranscribeAPIWrapper:
                             job_data["json"] = json_results
 
                     else:  # job_status == FAILED
+                        # if the job failed, lets report the error in the corresponding column
                         job_data = {
                             "failure_reason": job.get("FailureReason")
                         }
@@ -221,6 +236,8 @@ class AWSTranscribeAPIWrapper:
 
         column_names = ["path", "AWS_transcribe_job_name", "language", "transcript",
                         "json", "output_error_message", "output_error_type"]
-        df = submitted_jobs.merge(job_results, right_on="AWS_transcribe_job_name", left_on="output_response")[
+
+        # Merging with the submitted jobs as there are some data there like the path to the audio file
+        df = submitted_jobs.merge(job_results, right_on="job_name", left_on="output_response")[
             column_names]
         return df
