@@ -97,7 +97,9 @@ class AWSTranscribeAPIWrapper:
         """
         audio_path = row[PATH_COLUMN]
         file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
-        job_name = f'{job_id}_{file_name}_{random.randint(1000, 9999)}'
+        NB_DIGIT_AWS_JOB_ID = 5
+        aws_job_id = str(random.randint(10 ** NB_DIGIT_AWS_JOB_ID, 10 ** (NB_DIGIT_AWS_JOB_ID + 1) - 1))
+        job_name = f'{job_id}_{aws_job_id}_{file_name}'
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
@@ -111,6 +113,7 @@ class AWSTranscribeAPIWrapper:
             transcribe_request["IdentifyLanguage"] = True
 
         response = self.client.start_transcription_job(**transcribe_request)
+        logging.info(f"AWS transcribe job {job_name} submitted.")
         return response["TranscriptionJob"]["TranscriptionJobName"]
 
     def get_transcription_job(self,
@@ -199,14 +202,17 @@ class AWSTranscribeAPIWrapper:
                             "language_code": job.get("LanguageCode"),
                             "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
                         }
+                        logging.info(f"AWS transcribe job {job_name} completed with success.")
 
                         if display_json:
                             job_data["json"] = json_results
 
-                    else: # job_status == FAILED
+                    else:  # job_status == FAILED
                         job_data = {
                             "failure_reason": job.get("FailureReason")
                         }
+                        logging.error(
+                            f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
                     res[job_name] = job_data
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
