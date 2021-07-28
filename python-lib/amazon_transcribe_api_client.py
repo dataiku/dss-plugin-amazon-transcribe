@@ -4,10 +4,9 @@
 import logging
 import os
 import random
-import json
 import time
 
-from typing import AnyStr, Dict, Tuple, Callable
+from typing import AnyStr, Dict, Tuple, Callable, List
 
 import boto3
 import pandas as pd
@@ -23,7 +22,7 @@ from plugin_io_utils import PATH_COLUMN
 # CONSTANT DEFINITION
 # ==============================================================================
 
-
+SLEEPING_TIME_BETWEEN_ROUNDS = 5
 
 
 # ==============================================================================
@@ -32,7 +31,6 @@ from plugin_io_utils import PATH_COLUMN
 
 
 class AWSTranscribeAPIWrapper:
-
     SUPPORTED_AUDIO_FORMATS = ["flac", "mp3", "mp4", "ogg", "webm", "amr", "wav"]
     API_EXCEPTIONS = (ClientError, BotoCoreError)
     COMPLETED = "COMPLETED"
@@ -41,11 +39,11 @@ class AWSTranscribeAPIWrapper:
     FAILED = "FAILED"
 
     def __init__(self,
-                 aws_access_key_id=None,
-                 aws_secret_access_key=None,
-                 aws_session_token=None,
-                 aws_region_name=None,
-                 max_attempts=20
+                 aws_access_key_id: AnyStr = None,
+                 aws_secret_access_key: AnyStr = None,
+                 aws_session_token: AnyStr = None,
+                 aws_region_name: AnyStr = None,
+                 max_attempts: int = 20
                  ):
         """
         Gets a translation API client from AWS credentials.
@@ -81,7 +79,6 @@ class AWSTranscribeAPIWrapper:
 
         logging.info("Credentials loaded.")
 
-
     def start_transcription_job(self,
                                 language: AnyStr,
                                 row: Dict = None,
@@ -89,7 +86,15 @@ class AWSTranscribeAPIWrapper:
                                 folder_root_path: AnyStr = "",
                                 job_id: AnyStr = "",
                                 **kwargs,
-                                ):
+                                ) -> AnyStr:
+        """
+        Function starting a transcription job given the language, the path to the audio, the job name and
+        some other data about the bucket
+
+        Returns:
+            name of the job that has been submitted
+
+        """
         audio_path = row[PATH_COLUMN]
         file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
         job_name = f'{job_id}_{file_name}_{random.randint(1000, 9999)}'
@@ -108,7 +113,6 @@ class AWSTranscribeAPIWrapper:
         response = self.client.start_transcription_job(**transcribe_request)
         return response["TranscriptionJob"]["TranscriptionJobName"]
 
-
     def get_transcription_job(self,
                               job_name: AnyStr
                               ):
@@ -121,7 +125,7 @@ class AWSTranscribeAPIWrapper:
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
                       status: AnyStr
-                      ):
+                      ) -> List[Dict]:
 
         response = self.client.list_transcription_jobs(
             JobNameContains=job_name_contains,
@@ -143,7 +147,12 @@ class AWSTranscribeAPIWrapper:
 
         return result
 
-    def get_results(self, submitted_jobs, recipe_job_id, display_json, function, **kwargs):
+    def get_results(self,
+                    submitted_jobs,
+                    recipe_job_id: AnyStr,
+                    display_json: bool,
+                    function: Callable,
+                    **kwargs):
         folder = kwargs["folder"]
         res = {}
         while len(submitted_jobs) != len(res):
@@ -164,7 +173,7 @@ class AWSTranscribeAPIWrapper:
 
                     res[job_name] = job_data
 
-            time.sleep(5)
+            time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
 
         df = pd.DataFrame.from_dict(res, orient='index')
         return df
