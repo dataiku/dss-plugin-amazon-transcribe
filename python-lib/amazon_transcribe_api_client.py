@@ -153,24 +153,33 @@ class AWSTranscribeAPIWrapper:
                     display_json: bool,
                     function: Callable,
                     **kwargs):
+
         folder = kwargs["folder"]
         res = {}
         while len(submitted_jobs) != len(res):
 
-            jobs = self.get_list_jobs(recipe_job_id, self.COMPLETED)
-            for job in jobs:
+            completed_jobs = self.get_list_jobs(recipe_job_id, self.COMPLETED)
+            failed_jobs = self.get_list_jobs(recipe_job_id, self.FAILED)
+            for job in completed_jobs + failed_jobs:
                 job_name = job.get("TranscriptionJobName")
+                job_status = job.get("TranscriptionJobStatus")
                 if job_name not in res:
-                    json_results = function(folder, job_name)
-                    job_data = {
-                        "AWS_transcribe_job_name": job_name,
-                        "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
-                        "language_code": job.get("LanguageCode"),
-                        "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
-                    }
-                    if display_json:
-                        job_data["json"] = json_results
+                    if job_status == self.COMPLETED:
+                        json_results = function(folder, job_name)
+                        job_data = {
+                            "AWS_transcribe_job_name": job_name,
+                            "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
+                            "language_code": job.get("LanguageCode"),
+                            "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+                        }
 
+                        if display_json:
+                            job_data["json"] = json_results
+
+                    else: # job_status == FAILED
+                        job_data = {
+                            "failure_reason": job.get("FailureReason")
+                        }
                     res[job_name] = job_data
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
