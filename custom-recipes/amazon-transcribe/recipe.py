@@ -35,6 +35,4 @@ job_results = params.api_wrapper.get_results(submitted_jobs=submitted_jobs,
                                     function=read_json_from_folder,
                                     folder=params.input_folder)
 
-df = submitted_jobs.merge(job_results, right_on="AWS_transcribe_job_name", left_on="output_response")
-
-params.output_dataset.write_with_schema(df)
+params.output_dataset.write_with_schema(job_results)

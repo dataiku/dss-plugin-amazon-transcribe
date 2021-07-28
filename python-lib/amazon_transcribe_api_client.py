@@ -217,5 +217,10 @@ class AWSTranscribeAPIWrapper:
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
 
-        df = pd.DataFrame.from_dict(res, orient='index')
+        job_results = pd.DataFrame.from_dict(res, orient='index')
+
+        column_names = ["path", "AWS_transcribe_job_name", "language", "transcript",
+                        "json", "output_error_message", "output_error_type"]
+        df = submitted_jobs.merge(job_results, right_on="AWS_transcribe_job_name", left_on="output_response")[
+            column_names]
         return df
