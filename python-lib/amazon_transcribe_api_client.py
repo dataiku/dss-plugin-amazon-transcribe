@@ -114,7 +114,12 @@ class AWSTranscribeAPIWrapper:
         else:
             transcribe_request["IdentifyLanguage"] = True
 
-        response = self.client.start_transcription_job(**transcribe_request)
+        try:
+            response = self.client.start_transcription_job(**transcribe_request)
+        except Exception as e:
+            logging.error(e)
+            raise
+
         logging.info(f"AWS transcribe job {job_name} submitted.")
         return response["TranscriptionJob"]["TranscriptionJobName"]
 
@@ -147,10 +152,14 @@ class AWSTranscribeAPIWrapper:
         """
 
         # First request of the list of jobs
-        response = self.client.list_transcription_jobs(
-            JobNameContains=job_name_contains,
-            Status=status
-        )
+        try:
+            response = self.client.list_transcription_jobs(
+                JobNameContains=job_name_contains,
+                Status=status
+            )
+        except Exception as e:
+            logging.error(e)
+            raise
 
         # If next_token is not None, it means there are more than one page, so we have to loop over them
         next_token = response.get("NextToken", None)
@@ -158,11 +167,15 @@ class AWSTranscribeAPIWrapper:
 
         # Loop over the next pages to get all jobs
         while next_token is not None:
-            response = self.client.list_transcription_jobs(
-                JobNameContains=job_name_contains,
-                Status=status,
-                NextToken=next_token
-            )
+            try:
+                response = self.client.list_transcription_jobs(
+                    JobNameContains=job_name_contains,
+                    Status=status,
+                    NextToken=next_token
+                )
+            except Exception as e:
+                logging.error(e)
+                raise
 
             result += response.get("TranscriptionJobSummaries", [])
             next_token = response.get("NextToken", None)
