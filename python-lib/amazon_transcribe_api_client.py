@@ -192,6 +192,8 @@ class AWSTranscribeAPIWrapper:
         # dataiku folder or custom folder for testing
         folder = kwargs["folder"]
 
+        submitted_jobs_dict = submitted_jobs.set_index("output_response").to_dict("index")
+
         # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
         #                             ...,
         #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
@@ -211,10 +213,13 @@ class AWSTranscribeAPIWrapper:
                         # Result json is being read by function. The Transcript will be there.
                         json_results = function(folder, job_name)
                         job_data = {
-                            "job_name": job_name,
-                            "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
-                            "language_code": job.get("LanguageCode"),
-                            "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+                            **submitted_jobs_dict[job_name],
+                            **{
+                                "job_name": job_name,
+                                "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
+                                "language_code": job.get("LanguageCode"),
+                                "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+                            }
                         }
                         logging.info(f"AWS transcribe job {job_name} completed with success.")
 
@@ -224,6 +229,7 @@ class AWSTranscribeAPIWrapper:
                     else:  # job_status == FAILED
                         # if the job failed, lets report the error in the corresponding column
                         job_data = {
+                            **submitted_jobs_dict[job_name],
                             "failure_reason": job.get("FailureReason")
                         }
                         logging.error(
@@ -233,11 +239,11 @@ class AWSTranscribeAPIWrapper:
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
 
         job_results = pd.DataFrame.from_dict(res, orient='index')
-
-        column_names = ["path", "AWS_transcribe_job_name", "language", "transcript",
-                        "json", "output_error_message", "output_error_type"]
-
-        # Merging with the submitted jobs as there are some data there like the path to the audio file
-        df = submitted_jobs.merge(job_results, right_on="job_name", left_on="output_response")[
-            column_names]
-        return df
+        return job_results
+        # column_names = ["path", "AWS_transcribe_job_name", "language", "transcript",
+        #                 "json", "output_error_message", "output_error_type"]
+        #
+        # # Merging with the submitted jobs as there are some data there like the path to the audio file
+        # df = submitted_jobs.merge(job_results, right_on="job_name", left_on="output_response")[
+        #     column_names]
+        # return df
