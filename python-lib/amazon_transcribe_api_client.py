@@ -6,7 +6,7 @@ import os
 import random
 import time
 
-from typing import AnyStr, Dict, Tuple, Callable, List
+from typing import AnyStr, Dict, Callable, List
 
 import boto3
 import pandas as pd
@@ -22,7 +22,7 @@ from plugin_io_utils import PATH_COLUMN
 # CONSTANT DEFINITION
 # ==============================================================================
 
-SLEEPING_TIME_BETWEEN_ROUNDS = 5
+SLEEPING_TIME_BETWEEN_ROUNDS_SEC = 5
 
 
 # ==============================================================================
@@ -56,11 +56,10 @@ class AWSTranscribeAPIWrapper:
                     service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
                 )
             except NoRegionError as e:
-                logging.info(
+                logging.error(
                     "The region could not be loaded from environment variables. "
-                    "Please specify in the plugin's API credentials settings."
+                    "Please specify in the plugin's API credentials settings.", e
                 )
-                logging.error(e)
                 raise
         # Use configured credentials
         else:
@@ -85,7 +84,6 @@ class AWSTranscribeAPIWrapper:
                                 folder_bucket: AnyStr = "",
                                 folder_root_path: AnyStr = "",
                                 job_id: AnyStr = "",
-                                **kwargs,
                                 ) -> AnyStr:
         """
         Function starting a transcription job given the language, the path to the audio, the job name and
@@ -123,21 +121,6 @@ class AWSTranscribeAPIWrapper:
         logging.info(f"AWS transcribe job {job_name} submitted.")
         return response["TranscriptionJob"]["TranscriptionJobName"]
 
-    def get_transcription_job(self,
-                              job_name: AnyStr
-                              ):
-        """
-        Get the full information of a specific job. (not used, as we prefer batch processing)
-
-        Returns:
-            Dictionary representing the job.
-        """
-        # deal with errors in case job_name does not exists
-        response = self.client.get_transcription_job(
-            TranscriptionJobName=job_name
-        )
-        return response["TranscriptionJob"]
-
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
                       status: AnyStr
@@ -150,23 +133,9 @@ class AWSTranscribeAPIWrapper:
         Returns:
             list of dictionary representing a summary of the jobs
         """
-
-        # First request of the list of jobs
-        try:
-            response = self.client.list_transcription_jobs(
-                JobNameContains=job_name_contains,
-                Status=status
-            )
-        except Exception as e:
-            logging.error(e)
-            raise
-
-        # If next_token is not None, it means there are more than one page, so we have to loop over them
-        next_token = response.get("NextToken", None)
-        result = response.get("TranscriptionJobSummaries", [])
-
-        # Loop over the next pages to get all jobs
-        while next_token is not None:
+        next_token = None
+        result = []
+        while True:
             try:
                 response = self.client.list_transcription_jobs(
                     JobNameContains=job_name_contains,
@@ -177,9 +146,11 @@ class AWSTranscribeAPIWrapper:
                 logging.error(e)
                 raise
 
+            # If next_token is not None, it means there are more than one page, so we have to loop over them
+            next_token = response.get("NextToken")
             result += response.get("TranscriptionJobSummaries", [])
-            next_token = response.get("NextToken", None)
-
+            if next_token is None:
+                break
         return result
 
     def get_results(self,
@@ -249,7 +220,7 @@ class AWSTranscribeAPIWrapper:
                             f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
                     res[job_name] = job_data
 
-            time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS)
+            time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)
 
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
