@@ -30,9 +30,9 @@ submitted_jobs = parallelizer.run(df=params.input_df,
 
 
 job_results = params.api_wrapper.get_results(submitted_jobs=submitted_jobs,
-                                    recipe_job_id=RECIPE_JOB_ID,
-                                    display_json=params.display_json,
-                                    function=read_json_from_folder,
-                                    folder=params.input_folder)
+                                             recipe_job_id=RECIPE_JOB_ID,
+                                             display_json=params.display_json,
+                                             function=read_json_from_folder,
+                                             folder=params.input_folder)
 
 params.output_dataset.write_with_schema(job_results)
