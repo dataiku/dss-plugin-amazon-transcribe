@@ -5,6 +5,7 @@ import logging
 import os
 import random
 import time
+import uuid
 
 from typing import AnyStr, Dict, Callable, List
 
@@ -15,15 +16,9 @@ from botocore.exceptions import BotoCoreError
 from botocore.exceptions import ClientError
 from botocore.exceptions import NoRegionError
 
-from language_dict import SUPPORTED_LANGUAGES
+from constants import SLEEPING_TIME_BETWEEN_ROUNDS_SEC
+from constants import SUPPORTED_LANGUAGES
 from plugin_io_utils import PATH_COLUMN
-
-# ==============================================================================
-# CONSTANT DEFINITION
-# ==============================================================================
-
-SLEEPING_TIME_BETWEEN_ROUNDS_SEC = 5
-
 
 # ==============================================================================
 # CLASS AND FUNCTION DEFINITION
@@ -31,7 +26,6 @@ SLEEPING_TIME_BETWEEN_ROUNDS_SEC = 5
 
 
 class AWSTranscribeAPIWrapper:
-    SUPPORTED_AUDIO_FORMATS = ["flac", "mp3", "mp4", "ogg", "webm", "amr", "wav"]
     API_EXCEPTIONS = (ClientError, BotoCoreError)
     COMPLETED = "COMPLETED"
     QUEUED = "QUEUED"
@@ -97,8 +91,7 @@ class AWSTranscribeAPIWrapper:
         file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
 
         # Generate a unique job_name for AWS Transcribe
-        NB_DIGIT_AWS_JOB_ID = 5
-        aws_job_id = str(random.randint(10 ** NB_DIGIT_AWS_JOB_ID, 10 ** (NB_DIGIT_AWS_JOB_ID + 1) - 1))
+        aws_job_id = uuid.uuid4().hex
         job_name = f'{job_id}_{aws_job_id}_{file_name}'
 
         transcribe_request = {
@@ -135,7 +128,9 @@ class AWSTranscribeAPIWrapper:
         """
         next_token = None
         result = []
+        i = 0
         while True:
+            logging.info(f"Fetching list_transcription_jobs for page {i}")
             try:
                 response = self.client.list_transcription_jobs(
                     JobNameContains=job_name_contains,
@@ -149,6 +144,7 @@ class AWSTranscribeAPIWrapper:
             # If next_token is not None, it means there are more than one page, so we have to loop over them
             next_token = response.get("NextToken")
             result += response.get("TranscriptionJobSummaries", [])
+            i += 1
             if next_token is None:
                 break
         return result

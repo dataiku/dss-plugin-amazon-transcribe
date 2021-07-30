@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Module with a constant for the language support of the Text Detection recipes"""
+
+SLEEPING_TIME_BETWEEN_ROUNDS_SEC = 5
+
+SUPPORTED_AUDIO_FORMATS = ["flac", "mp3", "mp4", "ogg", "webm", "amr", "wav"]
 
 SUPPORTED_LANGUAGES = {
     "auto": "auto",
@@ -35,4 +38,4 @@ SUPPORTED_LANGUAGES = {
     "te-IN": "Telugu",
     "tr-TR": "Turkish"
 }
-"""Supported languages for the Text Detection API for images and documents"""
+

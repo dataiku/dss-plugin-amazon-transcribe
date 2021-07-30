@@ -10,8 +10,7 @@ from plugin_params_loader import RecipeID
 # CONSTANT DEFINITION
 # ==============================================================================
 
-NB_DIGIT_JOB_ID = 5
-RECIPE_JOB_ID = str(random.randint(10**NB_DIGIT_JOB_ID, 10**(NB_DIGIT_JOB_ID+1) - 1))
+RECIPE_JOB_ID = dataiku.dku_custom_variables.get('jobId')
 
 # ==============================================================================
 # SETUP

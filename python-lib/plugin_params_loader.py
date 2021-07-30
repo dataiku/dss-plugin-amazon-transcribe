@@ -18,7 +18,7 @@ from dku_io_utils import generate_path_df
 
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 
-from language_dict import SUPPORTED_LANGUAGES
+from constants import SUPPORTED_LANGUAGES
 
 DOC_URL = "https://www.dataiku.com/product/plugins/google-cloud-vision/"
 
