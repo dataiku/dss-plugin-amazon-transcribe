@@ -3,9 +3,10 @@
 
 import logging
 import os
-import random
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm.auto import tqdm as tqdm_auto
 
 from typing import AnyStr, Dict, Callable, List
 
@@ -78,6 +79,7 @@ class AWSTranscribeAPIWrapper:
                                 folder_bucket: AnyStr = "",
                                 folder_root_path: AnyStr = "",
                                 job_id: AnyStr = "",
+                                **kwargs
                                 ) -> AnyStr:
         """
         Function starting a transcription job given the language, the path to the audio, the job name and
@@ -131,21 +133,27 @@ class AWSTranscribeAPIWrapper:
         i = 0
         while True:
             logging.info(f"Fetching list_transcription_jobs for page {i}")
+
             try:
+                args = {
+                    "JobNameContains": job_name_contains,
+                    "Status": status,
+                }
+                if next_token is not None:
+                    args["NextToken"] = next_token
                 response = self.client.list_transcription_jobs(
-                    JobNameContains=job_name_contains,
-                    Status=status,
-                    NextToken=next_token
+                    **args
                 )
+
             except Exception as e:
                 logging.error(e)
                 raise
 
             # If next_token is not None, it means there are more than one page, so we have to loop over them
-            next_token = response.get("NextToken")
+            next_token = response.get("NextToken", None)
             result += response.get("TranscriptionJobSummaries", [])
             i += 1
-            if next_token is None:
+            if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
                 break
         return result
 
@@ -179,12 +187,23 @@ class AWSTranscribeAPIWrapper:
         #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
         res = {}
         while len(submitted_jobs) != len(res):
-
-            completed_jobs = self.get_list_jobs(recipe_job_id, self.COMPLETED)
-            failed_jobs = self.get_list_jobs(recipe_job_id, self.FAILED)
+            jobs = []
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [
+                    pool.submit(
+                        fn=self.get_list_jobs,
+                        job_name_contains=recipe_job_id,
+                        status=status
+                    ) for status in [self.COMPLETED, self.FAILED]
+                ]
+                for future in tqdm_auto(
+                        as_completed(futures), total=2, miniters=1, mininterval=1.0
+                ):
+                    jobs += future.result()
 
             # loop over all the finished jobs whether they completed with success or failed
-            for job in completed_jobs + failed_jobs:
+            for job in jobs:
+
                 job_name = job.get("TranscriptionJobName")
                 job_status = job.get("TranscriptionJobStatus")
                 if job_name not in res:
