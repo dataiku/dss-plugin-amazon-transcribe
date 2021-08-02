@@ -1,5 +1,7 @@
+import pandas as pd
 import pytest
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
+import uuid
 
 
 class TestAWSTranscribeAPIWrapper:
@@ -16,21 +18,44 @@ class TestAWSTranscribeAPIWrapper:
     def test_start_transcription_job(self):
 
         response = self.client.start_transcription_job(language="auto",
-                                            row={"path": "/test-fr.mp3"},
-                                            folder_bucket="jplassmann-transcribe-plugin",
-                                            folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
-                                            job_id="1111")
+                                                       row={"path": "/test-fr.mp3"},
+                                                       folder_bucket="jplassmann-transcribe-plugin",
+                                                       folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
+                                                       job_id="1111")
 
 
         assert type(response) == str
 
 
-    def test_get_transcription_job(self):
-        assert False
-
-
-    def test_get_list_jobs(self):
-        assert False
+    # def test_get_transcription_job(self):
+    #     assert False
+    #
+    #
+    # def test_get_list_jobs(self):
+    #     assert False
 
     def test_get_results(self):
-        assert False
+
+        def fn(folder, job_name):
+            return {
+                'results': {
+                    'transcripts': [
+                        {"transcript": 'ceci est un deuxième test.'}
+                    ]
+                }
+            }
+
+        aws_job_id = uuid.uuid4().hex
+        response = self.client.start_transcription_job(language="auto",
+                                                       row={"path": "/Test-fr-2.mp3"},
+                                                       folder_bucket="jplassmann-transcribe-plugin",
+                                                       folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
+                                                       job_id=aws_job_id)
+        submitted_jobs = pd.DataFrame.from_dict([{"path": "/Test-fr-2.mp3", "output_response": response}])
+        res = self.client.get_results(submitted_jobs=submitted_jobs,
+                                      recipe_job_id=aws_job_id,
+                                      display_json=False,
+                                      function=fn,
+                                      folder="")
+        transcript = res["transcript"][0]
+        assert transcript == 'ceci est un deuxième test.'
