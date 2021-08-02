@@ -1,6 +1,5 @@
 import pytest
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
-# from . import credentials
 
 
 class TestAWSTranscribeAPIWrapper:

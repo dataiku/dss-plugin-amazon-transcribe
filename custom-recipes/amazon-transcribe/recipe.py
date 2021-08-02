@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import random
 
-from dku_io_utils import read_json_from_folder
+from dku_io_utils import read_json_from_folder, set_column_description
 from parallelizer import DataFrameParallelizer
 from plugin_params_loader import PluginParamsLoader
 from plugin_params_loader import RecipeID
@@ -24,6 +24,7 @@ parallelizer = DataFrameParallelizer(function=params.api_wrapper.start_transcrip
 submitted_jobs = parallelizer.run(df=params.input_df,
                                   folder_bucket=params.input_folder_bucket,
                                   folder_root_path=params.input_folder_root_path,
+                                  parallel_workers=params.parallel_workers,
                                   job_id=RECIPE_JOB_ID,
                                   **vars(params))
 
@@ -35,3 +36,4 @@ job_results = params.api_wrapper.get_results(submitted_jobs=submitted_jobs,
                                              folder=params.input_folder)
 
 params.output_dataset.write_with_schema(job_results)
+set_column_description(params.output_dataset, {'path': 'Path to the audio file.'})
