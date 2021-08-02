@@ -2,7 +2,6 @@
 """Module with utility classes for validating and loading plugin parameters"""
 
 import logging
-import math
 from typing import List, Dict, AnyStr
 from enum import Enum
 
@@ -19,8 +18,10 @@ from dku_io_utils import generate_path_df
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 
 from constants import SUPPORTED_LANGUAGES
+from constants import SUPPORTED_AUDIO_FORMATS
 
-DOC_URL = "https://www.dataiku.com/product/plugins/google-cloud-vision/"
+# TODO
+DOC_URL = "https://www.dataiku.com/product/plugins/.../"
 
 
 class RecipeID(Enum):
@@ -56,16 +57,11 @@ class PluginParams:
             display_json: bool = False,
             api_quota_rate_limit: int = 1800,
             api_quota_period: int = 60,
-            batch_support: bool = False,
-            batch_size: int = 4,
             parallel_workers: int = 4,
             error_handling: ErrorHandling = ErrorHandling.LOG,
             features: List[Dict] = [{}],
             max_results: int = 10,
-            image_context: Dict = {},
             minimum_score: float = 0.0,
-            # content_categories: List[vision.Feature.Type] = [],
-            # unsafe_content_categories: List[UnsafeContentCategory] = [],
             **kwargs,
     ):
         store_attr()
@@ -88,7 +84,7 @@ class PluginParamsLoader:
             raise PluginParamValidationError("Please specify input folder")
         input_params["input_folder"] = dataiku.Folder(input_folder_names[0])
 
-        file_extensions = AWSTranscribeAPIWrapper.SUPPORTED_AUDIO_FORMATS
+        file_extensions = SUPPORTED_AUDIO_FORMATS
         input_params["input_df"] = generate_path_df(
             folder=input_params["input_folder"], file_extensions=file_extensions, path_column=PATH_COLUMN
         )
@@ -112,8 +108,6 @@ class PluginParamsLoader:
         if len(output_dataset_names) == 0:
             raise PluginParamValidationError("Please specify output dataset")
         output_params["output_dataset"] = dataiku.Dataset(output_dataset_names[0])
-        # Output folder
-        output_folder_names = get_output_names_for_role("output_folder")
 
         return output_params
 
@@ -134,19 +128,11 @@ class PluginParamsLoader:
         # preset_params["api_quota_period"] = int(api_configuration_preset.get("api_quota_period"))
         # if preset_params["api_quota_period"] < 1:
         #     raise PluginParamValidationError("API quota period must be greater than 1")
-        # if not api_configuration_preset.get("parallel_workers"):
-        #     raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
-        # preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
-        # if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
-        #     raise PluginParamValidationError("Concurrency must be between 1 and 100")
-        # if not api_configuration_preset.get("batch_size"):
-        #     raise PluginParamValidationError(f"Please specify batch size in the preset according to {DOC_URL}")
-        # preset_params["batch_size"] = int(api_configuration_preset.get("batch_size"))
-        # if preset_params["batch_size"] < 1 or preset_params["batch_size"] > 16:
-        #     raise PluginParamValidationError("Batch size must be between 1 and 16")
-        # if self.recipe_id == RecipeID.DOCUMENT_TEXT_DETECTION:
-        #     logging.info("Forcing batch size to 1 in the case of document text detection")
-        #     preset_params["batch_size"] = 1
+        if not api_configuration_preset.get("parallel_workers"):
+            raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
+        preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
+        if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
+            raise PluginParamValidationError("Concurrency must be between 1 and 100")
         # if not api_configuration_preset.get("api_quota_rate_limit"):
         #     raise PluginParamValidationError(
         #         f"Please specify API quota rate limit in the preset according to {DOC_URL}"
@@ -166,12 +152,7 @@ class PluginParamsLoader:
             aws_region_name=preset_params["aws_region_name"],
             max_attempts=preset_params["max_attempts"]
         )
-        # GoogleCloudVisionAPIWrapper(
-        #     gcp_service_account_key=preset_params["gcp_service_account_key"],
-        #     gcp_continent=None if preset_params["gcp_continent"] == "auto" else preset_params["gcp_continent"],
-        #     api_quota_period=preset_params["api_quota_period"],
-        #     api_quota_rate_limit=preset_params["api_quota_rate_limit"],
-        # )
+
         preset_params_displayable = {
             param_name: param_value
             for param_name, param_value in preset_params.items()
@@ -185,55 +166,22 @@ class PluginParamsLoader:
         recipe_params = {}
         # Applies to several recipes
 
-        # recipe_params["error_handling"] = ErrorHandling[self.recipe_config.get("error_handling")]
+        recipe_params["error_handling"] = ErrorHandling[self.recipe_config.get("error_handling")]
 
         # if "minimum_score" in self.recipe_config:
         #     recipe_params["minimum_score"] = float(self.recipe_config["minimum_score"])
         #     if recipe_params["minimum_score"] < 0.0 or recipe_params["minimum_score"] > 1.0:
         #         raise PluginParamValidationError("Minimum score must be between 0 and 1")
-        # Applies to content detection & labeling
-        # if "content_categories" in self.recipe_config:
-        #     recipe_params["content_categories"] = [
-        #         vision.Feature.Type[content_category]
-        #         for content_category in self.recipe_config.get("content_categories", [])
-        #     ]
-        #     if len(recipe_params["content_categories"]) == 0:
-        #         raise PluginParamValidationError("Please select at least one content category")
-        # if "max_results" in self.recipe_config:
-        #     recipe_params["max_results"] = int(self.recipe_config["max_results"])
-        #     if recipe_params["max_results"] < 1:
-        #         raise PluginParamValidationError("Number of results must be greater than 1")
-        # Applies to image and document text detection
+
         if "language" in self.recipe_config:
             language = self.recipe_config["language"]
             if language not in SUPPORTED_LANGUAGES and language != "":
                 raise PluginParamValidationError({f"Invalid language code: {language}"})
-            # recipe_params["language_hints"] = [language]
             recipe_params["language"] = language
 
         if "display_json" in self.recipe_config:
             recipe_params["display_json"] = self.recipe_config["display_json"]
-        # Applies to document text detection, overrides language if specified
-        # if "custom_language_hints" in self.recipe_config:
-        #     custom_language_hints = str(self.recipe_config["custom_language_hints"]).replace(" ", "").split(",")
-        #     if len(custom_language_hints) != 0:
-        #         recipe_params["language_hints"] = custom_language_hints
-        # Applies to image text detection
-        # if "text_detection_type" in self.recipe_config:
-        #     recipe_params["text_detection_type"] = vision.Feature.Type[self.recipe_config["text_detection_type"]]
-        # Applies to unsafe content moderation
-        # if "unsafe_content_categories" in self.recipe_config:
-        #     recipe_params["unsafe_content_categories"] = [
-        #         UnsafeContentCategory[category_name]
-        #         for category_name in self.recipe_config.get("unsafe_content_categories", [])
-        #     ]
-        #     if len(recipe_params["unsafe_content_categories"]) == 0:
-        #         raise PluginParamValidationError("Please select at least one unsafe category")
-        # Applies to cropping
-        # if "aspect_ratio" in self.recipe_config:
-        #     recipe_params["aspect_ratio"] = float(self.recipe_config["aspect_ratio"])
-        #     if recipe_params["aspect_ratio"] < 0.1 or recipe_params["aspect_ratio"] > 10:
-        #         raise PluginParamValidationError("Aspect ratio must be between 0.1 and 10")
+
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
 
@@ -243,27 +191,10 @@ class PluginParamsLoader:
         output_params = self.validate_output_params()
         preset_params = self.validate_preset_params()
         recipe_params = self.validate_recipe_params()
-        # image_context, features = ({}, {})
-        # if self.recipe_id == RecipeID.CONTENT_DETECTION_LABELING:
-        #     features = [
-        #         {"type_": content_category, "max_results": recipe_params["max_results"]}
-        #         for content_category in recipe_params["content_categories"]
-        #     ]
-        # elif self.recipe_id in {RecipeID.IMAGE_TEXT_DETECTION, RecipeID.DOCUMENT_TEXT_DETECTION}:
-        #     image_context = {"language_hints": recipe_params["language_hints"]}
-        #     features = [
-        #         {"type_": recipe_params.get("text_detection_type", vision.Feature.Type.DOCUMENT_TEXT_DETECTION)}
-        #     ]
-        # elif self.recipe_id == RecipeID.UNSAFE_CONTENT_MODERATION:
-        #     features = [{"type_": vision.Feature.Type.SAFE_SEARCH_DETECTION}]
-        # elif self.recipe_id == RecipeID.CROPPING:
-        #     image_context = {"crop_hints_params": {"aspect_ratios": [recipe_params["aspect_ratio"]]}}
-        #     features = [{"type_": vision.Feature.Type.CROP_HINTS}]
+
         plugin_params = PluginParams(
             batch_support=self.batch_support,
             column_prefix=self.column_prefix,
-            # image_context=image_context,
-            # features=features,
             **input_params,
             **output_params,
             **recipe_params,
