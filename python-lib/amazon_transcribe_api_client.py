@@ -90,11 +90,10 @@ class AWSTranscribeAPIWrapper:
 
         """
         audio_path = row[PATH_COLUMN]
-        file_name = os.path.splitext(os.path.split(audio_path)[1])[0]
 
         # Generate a unique job_name for AWS Transcribe
         aws_job_id = uuid.uuid4().hex
-        job_name = f'{job_id}_{aws_job_id}_{file_name}'
+        job_name = f'{job_id}_{aws_job_id}'
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
@@ -111,7 +110,7 @@ class AWSTranscribeAPIWrapper:
             response = self.client.start_transcription_job(**transcribe_request)
         except Exception as e:
             logging.error(e)
-            raise
+            raise e
 
         logging.info(f"AWS transcribe job {job_name} submitted.")
         return response["TranscriptionJob"]["TranscriptionJobName"]
