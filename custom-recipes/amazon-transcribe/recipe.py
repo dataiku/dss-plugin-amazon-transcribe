@@ -24,7 +24,6 @@ parallelizer = DataFrameParallelizer(function=params.api_wrapper.start_transcrip
 submitted_jobs = parallelizer.run(df=params.input_df,
                                   folder_bucket=params.input_folder_bucket,
                                   folder_root_path=params.input_folder_root_path,
-                                  parallel_workers=params.parallel_workers,
                                   job_id=RECIPE_JOB_ID,
                                   **vars(params))
 

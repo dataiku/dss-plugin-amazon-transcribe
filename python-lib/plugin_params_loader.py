@@ -128,11 +128,11 @@ class PluginParamsLoader:
         # preset_params["api_quota_period"] = int(api_configuration_preset.get("api_quota_period"))
         # if preset_params["api_quota_period"] < 1:
         #     raise PluginParamValidationError("API quota period must be greater than 1")
-        if not api_configuration_preset.get("parallel_workers"):
-            raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
-        preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
-        if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
-            raise PluginParamValidationError("Concurrency must be between 1 and 100")
+        # if not api_configuration_preset.get("parallel_workers"):
+        #     raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
+        # preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
+        # if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
+        #     raise PluginParamValidationError("Concurrency must be between 1 and 100")
         # if not api_configuration_preset.get("api_quota_rate_limit"):
         #     raise PluginParamValidationError(
         #         f"Please specify API quota rate limit in the preset according to {DOC_URL}"
@@ -166,7 +166,7 @@ class PluginParamsLoader:
         recipe_params = {}
         # Applies to several recipes
 
-        recipe_params["error_handling"] = ErrorHandling[self.recipe_config.get("error_handling")]
+        # recipe_params["error_handling"] = ErrorHandling[self.recipe_config.get("error_handling")]
 
         # if "minimum_score" in self.recipe_config:
         #     recipe_params["minimum_score"] = float(self.recipe_config["minimum_score"])
