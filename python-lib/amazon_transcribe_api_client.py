@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module with utility functions to call the Amazon Transcribe API"""
-
+import json
 import logging
 import time
 import uuid
@@ -16,14 +16,14 @@ from botocore.exceptions import BotoCoreError
 from botocore.exceptions import ClientError
 from botocore.exceptions import NoRegionError
 
-from constants import SLEEPING_TIME_BETWEEN_ROUNDS_SEC
-from constants import SUPPORTED_LANGUAGES
+from dku_constants import SLEEPING_TIME_BETWEEN_ROUNDS_SEC
+from dku_constants import SUPPORTED_LANGUAGES
 from plugin_io_utils import PATH_COLUMN
 
 # ==============================================================================
 # CLASS AND FUNCTION DEFINITION
 # ==============================================================================
-
+AWS_FAILURE = "AWS_FAILURE"
 
 class AWSTranscribeAPIWrapper:
     API_EXCEPTIONS = (ClientError, BotoCoreError)
@@ -128,10 +128,6 @@ class AWSTranscribeAPIWrapper:
         next_token = None
         result = []
         i = 0
-
-        # import pydevd_pycharm
-        # pydevd_pycharm.settrace('localhost', port=6516, stdoutToServer=True, stderrToServer=True)
-
         while True:
             logging.info(f"Fetching list_transcription_jobs for page {i}")
 
@@ -148,7 +144,7 @@ class AWSTranscribeAPIWrapper:
 
             except Exception as e:
                 logging.error(e)
-                raise
+                raise e
 
             # If next_token is not None, it means there are more than one page, so we have to loop over them
             next_token = response.get("NextToken", None)
@@ -181,7 +177,10 @@ class AWSTranscribeAPIWrapper:
         # dataiku folder or custom folder for testing
         folder = kwargs["folder"]
 
-        submitted_jobs_dict = submitted_jobs.set_index("output_response").to_dict("index")
+        mask = submitted_jobs["output_error_type"] == ""
+        res = submitted_jobs[~mask].set_index("output_response").to_dict("index")
+
+        submitted_jobs_dict = submitted_jobs[mask].set_index("output_response").to_dict("index")
 
         # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
         #                             ...,
@@ -208,32 +207,29 @@ class AWSTranscribeAPIWrapper:
                 job_name = job.get("TranscriptionJobName")
                 job_status = job.get("TranscriptionJobStatus")
                 if job_name not in res:
+                    job_data = {
+                        "path": submitted_jobs_dict[job_name]["path"],
+                        "job_name": job_name,
+                    }
                     if job_status == self.COMPLETED:
 
                         # Result json is being read by function. The Transcript will be there.
                         json_results = function(folder, job_name)
-                        job_data = {
-                            **submitted_jobs_dict[job_name],
-                            **{
-                                "job_name": job_name,
-                                "transcript": json_results.get("results").get("transcripts")[0].get("transcript"),
-                                "language_code": job.get("LanguageCode"),
-                                "language": SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
-                            }
-                        }
-                        logging.info(f"AWS transcribe job {job_name} completed with success.")
-
+                        job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
+                        job_data["language_code"] = job.get("LanguageCode")
+                        job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
                         if display_json:
                             job_data["json"] = json_results
+                        logging.info(f"AWS transcribe job {job_name} completed with success.")
 
                     else:  # job_status == FAILED
                         # if the job failed, lets report the error in the corresponding column
-                        job_data = {
-                            **submitted_jobs_dict[job_name],
-                            "failure_reason": job.get("FailureReason")
-                        }
                         logging.error(
                             f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
+
+                    job_data["output_error_type"] = AWS_FAILURE if job_status == self.FAILED else ""
+                    job_data["output_error_message"] = job.get("FailureReason") if job_status == self.FAILED else ""
+
                     res[job_name] = job_data
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)

@@ -17,8 +17,8 @@ from dku_io_utils import generate_path_df
 
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 
-from constants import SUPPORTED_LANGUAGES
-from constants import SUPPORTED_AUDIO_FORMATS
+from dku_constants import SUPPORTED_LANGUAGES
+from dku_constants import SUPPORTED_AUDIO_FORMATS
 
 # TODO
 DOC_URL = "https://www.dataiku.com/product/plugins/.../"
