@@ -25,7 +25,7 @@ submitted_jobs = parallelizer.run(df=params.input_df,
                                   folder_bucket=params.input_folder_bucket,
                                   folder_root_path=params.input_folder_root_path,
                                   job_id=RECIPE_JOB_ID,
-                                  **vars(params))
+                                  language=params.language)
 
 
 job_results = params.api_wrapper.get_results(submitted_jobs=submitted_jobs,

@@ -78,8 +78,7 @@ class AWSTranscribeAPIWrapper:
                                 row: Dict = None,
                                 folder_bucket: AnyStr = "",
                                 folder_root_path: AnyStr = "",
-                                job_id: AnyStr = "",
-                                **kwargs
+                                job_id: AnyStr = ""
                                 ) -> AnyStr:
         """
         Function starting a transcription job given the language, the path to the audio, the job name and
@@ -130,6 +129,10 @@ class AWSTranscribeAPIWrapper:
         next_token = None
         result = []
         i = 0
+
+        # import pydevd_pycharm
+        # pydevd_pycharm.settrace('localhost', port=6516, stdoutToServer=True, stderrToServer=True)
+
         while True:
             logging.info(f"Fetching list_transcription_jobs for page {i}")
 
