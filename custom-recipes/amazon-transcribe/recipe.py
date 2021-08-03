@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import random
 
 from dku_io_utils import read_json_from_folder, set_column_description
-from parallelizer import DataFrameParallelizer
+from dkulib.core.parallelizer import DataFrameParallelizer
 from plugin_params_loader import PluginParamsLoader
 from plugin_params_loader import RecipeID
 

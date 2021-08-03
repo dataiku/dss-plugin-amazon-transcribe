@@ -2,7 +2,6 @@
 """Module with utility functions to call the Amazon Transcribe API"""
 
 import logging
-import os
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
