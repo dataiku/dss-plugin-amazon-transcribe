@@ -174,9 +174,6 @@ class AWSTranscribeAPIWrapper:
 
         """
 
-        # dataiku folder or custom folder for testing
-        folder = kwargs["folder"]
-
         mask = submitted_jobs["output_error_type"] == ""
         res = submitted_jobs[~mask].set_index("output_response").to_dict("index")
 
@@ -185,7 +182,7 @@ class AWSTranscribeAPIWrapper:
         # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
         #                             ...,
         #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
-        res = {}
+
         while len(submitted_jobs) != len(res):
             jobs = []
             with ThreadPoolExecutor(max_workers=2) as pool:
@@ -203,32 +200,13 @@ class AWSTranscribeAPIWrapper:
 
             # loop over all the finished jobs whether they completed with success or failed
             for job in jobs:
-
                 job_name = job.get("TranscriptionJobName")
-                job_status = job.get("TranscriptionJobStatus")
                 if job_name not in res:
-                    job_data = {
-                        "path": submitted_jobs_dict[job_name]["path"],
-                        "job_name": job_name,
-                    }
-                    if job_status == self.COMPLETED:
-
-                        # Result json is being read by function. The Transcript will be there.
-                        json_results = function(folder, job_name)
-                        job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
-                        job_data["language_code"] = job.get("LanguageCode")
-                        job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
-                        if display_json:
-                            job_data["json"] = json_results
-                        logging.info(f"AWS transcribe job {job_name} completed with success.")
-
-                    else:  # job_status == FAILED
-                        # if the job failed, lets report the error in the corresponding column
-                        logging.error(
-                            f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
-
-                    job_data["output_error_type"] = AWS_FAILURE if job_status == self.FAILED else ""
-                    job_data["output_error_message"] = job.get("FailureReason") if job_status == self.FAILED else ""
+                    job_data = self._get_job_res(path=submitted_jobs_dict[job_name]["path"],
+                                                 display_json=display_json,
+                                                 job=job,
+                                                 function=function,
+                                                 **kwargs)
 
                     res[job_name] = job_data
 
@@ -236,3 +214,51 @@ class AWSTranscribeAPIWrapper:
 
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
+
+    def _get_job_res(self,
+                     path: str,
+                     job: dict,
+                     display_json: bool,
+                     function: Callable,
+                     **kwargs):
+        """
+        Creates one row of the final DataFrame. Takes the job summary as argument and take all the needed
+        data for the row, together with the reading in the json file.
+
+        Returns:
+            Dictionary {'path': str, 'job_name': str, 'transcript': str, 'language': str, 'language_code': str
+                        'json': str, 'output_error_type': str, 'output_error_message': str}
+
+        """
+
+        job_name = job.get("TranscriptionJobName")
+        job_status = job.get("TranscriptionJobStatus")
+
+        # dataiku folder or custom folder for testing
+        folder = kwargs["folder"]
+
+        job_data = {
+            "path": path,
+            "job_name": job_name,
+        }
+        if job_status == self.COMPLETED:
+
+            # Result json is being read by function. The Transcript will be there.
+            json_results = function(folder, job_name)
+            job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
+            job_data["language_code"] = job.get("LanguageCode")
+            job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+            if display_json:
+                job_data["json"] = json_results
+            logging.info(f"AWS transcribe job {job_name} completed with success.")
+
+        else:  # job_status == FAILED
+            # if the job failed, lets report the error in the corresponding column
+            logging.error(
+                f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
+
+        job_data["output_error_type"] = AWS_FAILURE if job_status == self.FAILED else ""
+        job_data["output_error_message"] = job.get("FailureReason") if job_status == self.FAILED else ""
+
+        return job_data
+
