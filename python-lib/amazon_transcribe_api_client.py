@@ -241,10 +241,3 @@ class AWSTranscribeAPIWrapper:
 
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
-        # column_names = ["path", "AWS_transcribe_job_name", "language", "transcript",
-        #                 "json", "output_error_message", "output_error_type"]
-        #
-        # # Merging with the submitted jobs as there are some data there like the path to the audio file
-        # df = submitted_jobs.merge(job_results, right_on="job_name", left_on="output_response")[
-        #     column_names]
-        # return df
