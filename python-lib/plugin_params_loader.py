@@ -42,6 +42,11 @@ class PluginParams:
     def __init__(
             self,
             # api_wrapper: AWSTranscribeAPIWrapper,
+            aws_access_key_id,
+            aws_secret_access_key,
+            aws_session_token: str,
+            aws_region_name: str,
+            max_attempts: str,
             input_folder: dataiku.Folder,
             input_df: pd.DataFrame,
             column_prefix: AnyStr = "api",

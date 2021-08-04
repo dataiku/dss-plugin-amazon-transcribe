@@ -220,10 +220,10 @@ class AWSTranscribeAPIWrapper:
                 job_name = job.get("TranscriptionJobName")
                 if job_name not in res:
                     job_data = self._result_parser(path=submitted_jobs_dict[job_name]["path"],
-                                                 display_json=display_json,
-                                                 job=job,
-                                                 function=function,
-                                                 **kwargs)
+                                                   display_json=display_json,
+                                                   job=job,
+                                                   function=function,
+                                                   **kwargs)
 
                     res[job_name] = job_data
 
