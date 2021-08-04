@@ -52,7 +52,7 @@ class AWSTranscribeAPIWrapper:
             except NoRegionError as e:
                 logging.error(
                     "The region could not be loaded from environment variables. "
-                    "Please specify in the plugin's API credentials settings.", e
+                    "Please specify in the plugin's API credentials settings or set the environment variables.", e
                 )
                 raise
         # Use configured credentials
@@ -264,4 +264,3 @@ class AWSTranscribeAPIWrapper:
         job_data["output_error_message"] = job.get("FailureReason") if job_status == self.FAILED else ""
 
         return job_data
-
