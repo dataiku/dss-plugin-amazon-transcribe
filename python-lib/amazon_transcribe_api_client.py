@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Module with utility functions to call the Amazon Transcribe API"""
-import json
 import logging
 import time
 import uuid
@@ -24,6 +23,7 @@ from plugin_io_utils import PATH_COLUMN
 # CLASS AND FUNCTION DEFINITION
 # ==============================================================================
 AWS_FAILURE = "AWS_FAILURE"
+NUM_CPU = 2
 
 
 class APIParameterError(ValueError):
@@ -91,7 +91,7 @@ class AWSTranscribeAPIWrapper:
                                 ) -> AnyStr:
         """
         Function starting a transcription job given the language, the path to the audio, the job name and
-        some other data about the bucket
+        the path connected to the dataiku Folder in the bucket.
 
         Returns:
             name of the job that has been submitted
@@ -109,10 +109,10 @@ class AWSTranscribeAPIWrapper:
             "OutputBucketName": folder_bucket,
             "OutputKey": f'{folder_root_path}/response/'
         }
-        if language != "auto":
-            transcribe_request["LanguageCode"] = language
-        else:
+        if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
+        else:
+            transcribe_request["LanguageCode"] = language
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
@@ -160,8 +160,8 @@ class AWSTranscribeAPIWrapper:
                 )
 
             except Exception as e:
-                logging.error(e)
-                raise e
+                raise Exception(f"Exception raised when trying to reach the page {i} of the job list."
+                                f"Full exception: {e}")
 
             # If next_token is not None, it means there are more than one page, so we have to loop over them
             next_token = response.get("NextToken", None)
@@ -202,7 +202,7 @@ class AWSTranscribeAPIWrapper:
 
         while len(submitted_jobs) != len(res):
             jobs = []
-            with ThreadPoolExecutor(max_workers=2) as pool:
+            with ThreadPoolExecutor(max_workers=NUM_CPU*2) as pool:
                 futures = [
                     pool.submit(
                         fn=self.get_list_jobs,
