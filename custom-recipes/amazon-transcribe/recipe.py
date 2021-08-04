@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 from dku_io_utils import read_json_from_folder, set_column_description
 from dkulib.core.parallelizer import DataFrameParallelizer
 from plugin_params_loader import PluginParamsLoader
@@ -17,8 +17,14 @@ RECIPE_JOB_ID = dataiku.dku_custom_variables.get('jobId')
 
 params = PluginParamsLoader(RecipeID.TRANSCRIBE).validate_load_params()
 
-parallelizer = DataFrameParallelizer(function=params.api_wrapper.start_transcription_job,
-                                     exceptions_to_catch=params.api_wrapper.API_EXCEPTIONS)
+api_wrapper = AWSTranscribeAPIWrapper(aws_access_key_id=params.aws_access_key_id,
+                                      aws_secret_access_key=params.aws_secret_access_key,
+                                      aws_session_token=params.aws_session_token,
+                                      aws_region_name=params.aws_region_name,
+                                      max_attempts=params.max_attempts)
+
+parallelizer = DataFrameParallelizer(function=api_wrapper.start_transcription_job,
+                                     exceptions_to_catch=api_wrapper.API_EXCEPTIONS)
 
 submitted_jobs = parallelizer.run(df=params.input_df,
                                   folder_bucket=params.input_folder_bucket,
@@ -27,11 +33,11 @@ submitted_jobs = parallelizer.run(df=params.input_df,
                                   language=params.language)
 
 
-job_results = params.api_wrapper.get_results(submitted_jobs=submitted_jobs,
-                                             recipe_job_id=RECIPE_JOB_ID,
-                                             display_json=params.display_json,
-                                             function=read_json_from_folder,
-                                             folder=params.input_folder)
+job_results = api_wrapper.get_results(submitted_jobs=submitted_jobs,
+                                      recipe_job_id=RECIPE_JOB_ID,
+                                      display_json=params.display_json,
+                                      function=read_json_from_folder,
+                                      folder=params.input_folder)
 
 params.output_dataset.write_with_schema(job_results)
 set_column_description(params.output_dataset, {'path': 'Path to the audio file.'})

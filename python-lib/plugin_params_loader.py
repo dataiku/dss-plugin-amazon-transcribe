@@ -145,13 +145,13 @@ class PluginParamsLoader:
         #         1, math.floor(preset_params["api_quota_rate_limit"] / preset_params["batch_size"])
         #     )
         #     logging.info("Dividing API quota rate limit by Batch size")
-        preset_params["api_wrapper"] = AWSTranscribeAPIWrapper(
-            aws_access_key_id=preset_params["aws_access_key_id"],
-            aws_secret_access_key=preset_params["aws_secret_access_key"],
-            aws_session_token=preset_params["aws_session_token"],
-            aws_region_name=preset_params["aws_region_name"],
-            max_attempts=preset_params["max_attempts"]
-        )
+        # preset_params["api_wrapper"] = AWSTranscribeAPIWrapper(
+        #     aws_access_key_id=preset_params["aws_access_key_id"],
+        #     aws_secret_access_key=preset_params["aws_secret_access_key"],
+        #     aws_session_token=preset_params["aws_session_token"],
+        #     aws_region_name=preset_params["aws_region_name"],
+        #     max_attempts=preset_params["max_attempts"]
+        # )
 
         preset_params_displayable = {
             param_name: param_value
