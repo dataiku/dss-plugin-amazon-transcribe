@@ -288,7 +288,7 @@ class AWSTranscribeAPIWrapper:
                 job_data["output_error_type"] = AWS_FAILURE
                 job_data["output_error_message"] = job.get("FailureReason")
                 logging.error(
-                    f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
+                    f"AWS transcribe job {job_name} failed. Failure reason: {job_data['output_error_message']}")
             except Exception as e:
                 raise Exception('Badly formed response, missing keys in the JSON result to get failure reason.'
                                 f'Full exception: {e}')
