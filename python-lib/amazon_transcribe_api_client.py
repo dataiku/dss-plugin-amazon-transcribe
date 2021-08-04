@@ -219,7 +219,7 @@ class AWSTranscribeAPIWrapper:
             for job in jobs:
                 job_name = job.get("TranscriptionJobName")
                 if job_name not in res:
-                    job_data = self._get_job_res(path=submitted_jobs_dict[job_name]["path"],
+                    job_data = self._result_parser(path=submitted_jobs_dict[job_name]["path"],
                                                  display_json=display_json,
                                                  job=job,
                                                  function=function,
@@ -232,7 +232,7 @@ class AWSTranscribeAPIWrapper:
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
 
-    def _get_job_res(self,
+    def _result_parser(self,
                      path: str,
                      job: dict,
                      display_json: bool,
