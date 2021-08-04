@@ -41,7 +41,7 @@ class PluginParams:
 
     def __init__(
             self,
-            api_wrapper: AWSTranscribeAPIWrapper,
+            # api_wrapper: AWSTranscribeAPIWrapper,
             input_folder: dataiku.Folder,
             input_df: pd.DataFrame,
             column_prefix: AnyStr = "api",
