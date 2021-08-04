@@ -26,13 +26,30 @@ class TestAWSTranscribeAPIWrapper:
 
         assert type(response) == str
 
-
-    # def test_get_transcription_job(self):
-    #     assert False
-    #
-    #
-    # def test_get_list_jobs(self):
-    #     assert False
+    def test__get_job_res(self):
+        """ Test schema of the job result. """
+        def fn(folder, job_name):
+            return {
+                'results': {
+                    'transcripts': [
+                        {"transcript": 'ceci est un deuxième test.'}
+                    ]
+                }
+            }
+        job_data = self.client._get_job_res(
+            path='',
+            job={"TranscriptionJobName": "", "TranscriptionJobStatus": self.client.COMPLETED, "LanguageCode": "EN"},
+            display_json=False,
+            function=fn,
+            folder=''
+        )
+        assert "path" in job_data
+        assert "job_name" in job_data
+        assert "transcript" in job_data
+        assert "language_code" in job_data
+        assert "language" in job_data
+        assert "output_error_type" in job_data
+        assert "output_error_message" in job_data
 
     def test_get_results(self):
 

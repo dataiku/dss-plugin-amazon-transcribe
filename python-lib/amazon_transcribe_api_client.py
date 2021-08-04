@@ -240,6 +240,9 @@ class AWSTranscribeAPIWrapper:
         job_data = {
             "path": path,
             "job_name": job_name,
+            "transcript": "",
+            "language_code": "",
+            "language": ""
         }
         if job_status == self.COMPLETED:
 
