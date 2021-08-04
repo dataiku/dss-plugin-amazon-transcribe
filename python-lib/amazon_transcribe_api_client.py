@@ -25,6 +25,18 @@ from plugin_io_utils import PATH_COLUMN
 # ==============================================================================
 AWS_FAILURE = "AWS_FAILURE"
 
+
+class APIParameterError(ValueError):
+    """Custom exception raised when the AWS api parameters chosen by the user are invalid"""
+
+    pass
+
+class APITranscriptionJobError(ValueError):
+    """Custom exception raised when the AWS API raise an exception"""
+
+    pass
+
+
 class AWSTranscribeAPIWrapper:
     API_EXCEPTIONS = (ClientError, BotoCoreError)
     COMPLETED = "COMPLETED"
@@ -50,11 +62,10 @@ class AWSTranscribeAPIWrapper:
                     service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
                 )
             except NoRegionError as e:
-                logging.error(
-                    "The region could not be loaded from environment variables. "
-                    "Please specify in the plugin's API credentials settings or set the environment variables.", e
-                )
-                raise
+                raise APIParameterError("The region could not be loaded from environment variables. "
+                                        "Please specify in the plugin's API credentials settings or "
+                                        "set the environment variables.")
+
         # Use configured credentials
         else:
             try:
@@ -67,8 +78,7 @@ class AWSTranscribeAPIWrapper:
                     config=Config(retries={"max_attempts": max_attempts}),
                 )
             except ClientError as e:
-                logging.error(e)
-                raise
+                raise APIParameterError("Error while using configured credentials.")
 
         logging.info("Credentials loaded.")
 
@@ -107,11 +117,18 @@ class AWSTranscribeAPIWrapper:
         try:
             response = self.client.start_transcription_job(**transcribe_request)
         except Exception as e:
-            logging.error(e)
-            raise e
+            raise APITranscriptionJobError("Error happened when starting a transcription job"
+                                           "raised by the function `start_transcription_job`."
+                                           f"Full exception: {e}")
 
         logging.info(f"AWS transcribe job {job_name} submitted.")
-        return response["TranscriptionJob"]["TranscriptionJobName"]
+
+        try:
+            return response["TranscriptionJob"]["TranscriptionJobName"]
+        except KeyError as e:
+            raise KeyError('Badly formed response, expect the keys such that:'
+                           'response["TranscriptionJob"]["TranscriptionJobName"] exists.'
+                           f'Full exception: {e}')
 
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
@@ -231,8 +248,12 @@ class AWSTranscribeAPIWrapper:
 
         """
 
-        job_name = job.get("TranscriptionJobName")
-        job_status = job.get("TranscriptionJobStatus")
+        try:
+            job_name = job.get("TranscriptionJobName")
+            job_status = job.get("TranscriptionJobStatus")
+        except Exception as e:
+            raise Exception('Badly formed response, missing keys in the JSON job result.'
+                            f'Full exception: {e}')
 
         # dataiku folder or custom folder for testing
         folder = kwargs["folder"]
@@ -242,25 +263,34 @@ class AWSTranscribeAPIWrapper:
             "job_name": job_name,
             "transcript": "",
             "language_code": "",
-            "language": ""
+            "language": "",
+            "output_error_type": "",
+            "output_error_message": ""
         }
         if job_status == self.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
             json_results = function(folder, job_name)
-            job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
-            job_data["language_code"] = job.get("LanguageCode")
-            job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+            try:
+                job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
+                job_data["language_code"] = job.get("LanguageCode")
+                job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
+            except Exception as e:
+                raise Exception('Badly formed response, missing keys in the JSON job result.'
+                                f'Full exception: {e}')
             if display_json:
                 job_data["json"] = json_results
             logging.info(f"AWS transcribe job {job_name} completed with success.")
 
         else:  # job_status == FAILED
             # if the job failed, lets report the error in the corresponding column
-            logging.error(
-                f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
-
-        job_data["output_error_type"] = AWS_FAILURE if job_status == self.FAILED else ""
-        job_data["output_error_message"] = job.get("FailureReason") if job_status == self.FAILED else ""
+            try:
+                job_data["output_error_type"] = AWS_FAILURE
+                job_data["output_error_message"] = job.get("FailureReason")
+                logging.error(
+                    f"AWS transcribe job {job_name} failed. Failure reason: {job_data['failure_reason']}")
+            except Exception as e:
+                raise Exception('Badly formed response, missing keys in the JSON result to get failure reason.'
+                                f'Full exception: {e}')
 
         return job_data
