@@ -138,10 +138,9 @@ class AWSTranscribeAPIWrapper:
 
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
-                      # status: AnyStr
                       ) -> List[Dict]:
         """
-        Get the list of jobs that contains "job_name_contains" in the job name and has a specific status.
+        Get the list of jobs that contains "job_name_contains" in the job name.
         The AWS API will give a list of jobs with at most 100 jobs, to get more than that, we have to go
         through the other pages by precising the NextToken argument to the next call of the API.
 
@@ -157,7 +156,6 @@ class AWSTranscribeAPIWrapper:
             try:
                 args = {
                     "JobNameContains": job_name_contains,
-                    # "Status": status,
                 }
                 if next_token is not None:
                     args["NextToken"] = next_token
@@ -207,22 +205,9 @@ class AWSTranscribeAPIWrapper:
         #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
 
         while len(submitted_jobs) != len(res):
-            jobs = []
-            # with ThreadPoolExecutor(max_workers=NUM_CPU*2) as pool:
-            #     futures = [
-            #         pool.submit(
-            #             fn=self.get_list_jobs,
-            #             job_name_contains=recipe_job_id,
-            #             status=status
-            #         ) for status in [self.COMPLETED, self.FAILED]
-            #     ]
-            #     for future in tqdm_auto(
-            #             as_completed(futures), total=2, miniters=1, mininterval=1.0
-            #     ):
-            #         jobs += future.result()
             jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
 
-            # loop over all the finished jobs whether they completed with success or failed
+            # loop over all jobs
             for job in jobs:
                 job_name = job.get("TranscriptionJobName")
                 if job_name not in res:
