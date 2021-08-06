@@ -41,32 +41,20 @@ class PluginParams:
 
     def __init__(
             self,
-            # api_wrapper: AWSTranscribeAPIWrapper,
-            aws_access_key_id,
-            aws_secret_access_key,
+            aws_access_key_id: str,
+            aws_secret_access_key: str,
             aws_session_token: str,
             aws_region_name: str,
             max_attempts: str,
             input_folder: dataiku.Folder,
-            input_df: pd.DataFrame,
             column_prefix: AnyStr = "api",
-            input_folder_is_s3: bool = False,
+            input_folder_is_s3: bool = True,
             input_folder_bucket: AnyStr = "",
             input_folder_root_path: AnyStr = "",
             output_dataset: dataiku.Dataset = None,
-            output_folder: dataiku.Folder = None,
-            output_folder_is_gcs: bool = False,
-            output_folder_bucket: AnyStr = "",
-            output_folder_root_path: AnyStr = "",
             language: AnyStr = "auto",
             display_json: bool = False,
-            api_quota_rate_limit: int = 1800,
-            api_quota_period: int = 60,
             parallel_workers: int = 4,
-            error_handling: ErrorHandling = ErrorHandling.LOG,
-            features: List[Dict] = [{}],
-            max_results: int = 10,
-            minimum_score: float = 0.0,
             **kwargs,
     ):
         store_attr()
@@ -128,35 +116,12 @@ class PluginParamsLoader:
         preset_params["aws_session_token"] = api_configuration_preset.get("aws_session_token")
         preset_params["aws_region_name"] = api_configuration_preset.get("aws_region_name")
         preset_params["max_attempts"] = api_configuration_preset.get("max_attempts")
-        # if not api_configuration_preset.get("api_quota_period"):
-        #     raise PluginParamValidationError(f"Please specify API quota period in the preset according to {DOC_URL}")
-        # preset_params["api_quota_period"] = int(api_configuration_preset.get("api_quota_period"))
-        # if preset_params["api_quota_period"] < 1:
-        #     raise PluginParamValidationError("API quota period must be greater than 1")
-        # if not api_configuration_preset.get("parallel_workers"):
-        #     raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
-        # preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
-        # if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
-        #     raise PluginParamValidationError("Concurrency must be between 1 and 100")
-        # if not api_configuration_preset.get("api_quota_rate_limit"):
-        #     raise PluginParamValidationError(
-        #         f"Please specify API quota rate limit in the preset according to {DOC_URL}"
-        #     )
-        # preset_params["api_quota_rate_limit"] = int(api_configuration_preset.get("api_quota_rate_limit"))
-        # if preset_params["api_quota_rate_limit"] < 1:
-        #     raise PluginParamValidationError("API quota rate limit must be greater than 1")
-        # if self.batch_support:
-        #     preset_params["api_quota_rate_limit"] = max(
-        #         1, math.floor(preset_params["api_quota_rate_limit"] / preset_params["batch_size"])
-        #     )
-        #     logging.info("Dividing API quota rate limit by Batch size")
-        # preset_params["api_wrapper"] = AWSTranscribeAPIWrapper(
-        #     aws_access_key_id=preset_params["aws_access_key_id"],
-        #     aws_secret_access_key=preset_params["aws_secret_access_key"],
-        #     aws_session_token=preset_params["aws_session_token"],
-        #     aws_region_name=preset_params["aws_region_name"],
-        #     max_attempts=preset_params["max_attempts"]
-        # )
+
+        if not api_configuration_preset.get("parallel_workers"):
+            raise PluginParamValidationError(f"Please specify concurrency in the preset according to {DOC_URL}")
+        preset_params["parallel_workers"] = int(api_configuration_preset.get("parallel_workers"))
+        if preset_params["parallel_workers"] < 1 or preset_params["parallel_workers"] > 100:
+            raise PluginParamValidationError("Concurrency must be between 1 and 100")
 
         preset_params_displayable = {
             param_name: param_value
@@ -169,14 +134,6 @@ class PluginParamsLoader:
     def validate_recipe_params(self) -> Dict:
         """Validate recipe parameters"""
         recipe_params = {}
-        # Applies to several recipes
-
-        # recipe_params["error_handling"] = ErrorHandling[self.recipe_config.get("error_handling")]
-
-        # if "minimum_score" in self.recipe_config:
-        #     recipe_params["minimum_score"] = float(self.recipe_config["minimum_score"])
-        #     if recipe_params["minimum_score"] < 0.0 or recipe_params["minimum_score"] > 1.0:
-        #         raise PluginParamValidationError("Minimum score must be between 0 and 1")
 
         if "language" in self.recipe_config:
             language = self.recipe_config["language"]

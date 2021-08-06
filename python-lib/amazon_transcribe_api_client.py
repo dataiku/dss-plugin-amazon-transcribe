@@ -2,6 +2,7 @@
 """Module with utility functions to call the Amazon Transcribe API"""
 import logging
 import time
+import datetime
 import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm.auto import tqdm as tqdm_auto
@@ -23,8 +24,13 @@ from plugin_io_utils import PATH_COLUMN
 # CLASS AND FUNCTION DEFINITION
 # ==============================================================================
 AWS_FAILURE = "AWS_FAILURE"
+JOB_TIMEOUT_ERROR_TYPE = "JOB_TIMEOUT_ERROR"
+JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
+TIMEOUT = 1
 
+def get_cpu():
+    return NUM_CPU
 
 class APIParameterError(ValueError):
     """Custom exception raised when the AWS api parameters chosen by the user are invalid"""
@@ -132,7 +138,7 @@ class AWSTranscribeAPIWrapper:
 
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
-                      status: AnyStr
+                      # status: AnyStr
                       ) -> List[Dict]:
         """
         Get the list of jobs that contains "job_name_contains" in the job name and has a specific status.
@@ -151,7 +157,7 @@ class AWSTranscribeAPIWrapper:
             try:
                 args = {
                     "JobNameContains": job_name_contains,
-                    "Status": status,
+                    # "Status": status,
                 }
                 if next_token is not None:
                     args["NextToken"] = next_token
@@ -202,18 +208,19 @@ class AWSTranscribeAPIWrapper:
 
         while len(submitted_jobs) != len(res):
             jobs = []
-            with ThreadPoolExecutor(max_workers=NUM_CPU*2) as pool:
-                futures = [
-                    pool.submit(
-                        fn=self.get_list_jobs,
-                        job_name_contains=recipe_job_id,
-                        status=status
-                    ) for status in [self.COMPLETED, self.FAILED]
-                ]
-                for future in tqdm_auto(
-                        as_completed(futures), total=2, miniters=1, mininterval=1.0
-                ):
-                    jobs += future.result()
+            # with ThreadPoolExecutor(max_workers=NUM_CPU*2) as pool:
+            #     futures = [
+            #         pool.submit(
+            #             fn=self.get_list_jobs,
+            #             job_name_contains=recipe_job_id,
+            #             status=status
+            #         ) for status in [self.COMPLETED, self.FAILED]
+            #     ]
+            #     for future in tqdm_auto(
+            #             as_completed(futures), total=2, miniters=1, mininterval=1.0
+            #     ):
+            #         jobs += future.result()
+            jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
 
             # loop over all the finished jobs whether they completed with success or failed
             for job in jobs:
@@ -224,8 +231,10 @@ class AWSTranscribeAPIWrapper:
                                                    job=job,
                                                    function=function,
                                                    **kwargs)
+                    if job_data is not None:
+                        res[job_name] = job_data
 
-                    res[job_name] = job_data
+
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)
 
@@ -233,11 +242,11 @@ class AWSTranscribeAPIWrapper:
         return job_results
 
     def _result_parser(self,
-                     path: str,
-                     job: dict,
-                     display_json: bool,
-                     function: Callable,
-                     **kwargs):
+                       path: str,
+                       job: dict,
+                       display_json: bool,
+                       function: Callable,
+                       **kwargs):
         """
         Creates one row of the final DataFrame. Takes the job summary as argument and take all the needed
         data for the row, together with the reading in the json file.
@@ -267,7 +276,16 @@ class AWSTranscribeAPIWrapper:
             "output_error_type": "",
             "output_error_message": ""
         }
-        if job_status == self.COMPLETED:
+        date_job_created = job.get("CreationTime")
+        now = datetime.datetime.now(tz=date_job_created.tzinfo)
+        time_delta_min = (now - date_job_created).seconds/60
+        if job_status in [self.QUEUED, self.IN_PROGRESS]:
+            if time_delta_min > TIMEOUT:
+                job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
+                job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
+            else:
+                return None
+        elif job_status == self.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
             json_results = function(folder, job_name)
