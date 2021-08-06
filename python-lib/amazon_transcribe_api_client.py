@@ -245,7 +245,7 @@ class AWSTranscribeAPIWrapper:
                        path: str,
                        job: dict,
                        display_json: bool,
-                       function: Callable,
+                       transcript_json_loader: Callable,
                        **kwargs):
         """
         Creates one row of the final DataFrame. Takes the job summary as argument and take all the needed
@@ -288,7 +288,7 @@ class AWSTranscribeAPIWrapper:
         elif job_status == self.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
-            json_results = function(folder, job_name)
+            json_results = transcript_json_loader(folder, job_name)
             try:
                 job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
                 job_data["language_code"] = job.get("LanguageCode")
