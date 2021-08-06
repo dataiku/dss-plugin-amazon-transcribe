@@ -27,7 +27,7 @@ AWS_FAILURE = "AWS_FAILURE"
 JOB_TIMEOUT_ERROR_TYPE = "JOB_TIMEOUT_ERROR"
 JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
-TIMEOUT = 1
+TIMEOUT_MIN = 10
 
 def get_cpu():
     return NUM_CPU
@@ -37,8 +37,12 @@ class APIParameterError(ValueError):
 
     pass
 
-class APITranscriptionJobError(ValueError):
+class APITranscriptionJobError(Exception):
     """Custom exception raised when the AWS API raise an exception"""
+
+    pass
+
+class ResponseFormatError(ValueError):
 
     pass
 
@@ -68,9 +72,11 @@ class AWSTranscribeAPIWrapper:
                     service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
                 )
             except NoRegionError as e:
-                raise APIParameterError("The region could not be loaded from environment variables. "
-                                        "Please specify in the plugin's API credentials settings or "
-                                        "set the environment variables.")
+                message = "The region could not be loaded from environment variables. " + \
+                          "Please specify in the plugin's API credentials settings or " + \
+                          f"set the environment variables. Full error: {e}"
+                logging.error(message)
+                raise APIParameterError(message)
 
         # Use configured credentials
         else:
@@ -84,7 +90,9 @@ class AWSTranscribeAPIWrapper:
                     config=Config(retries={"max_attempts": max_attempts}),
                 )
             except ClientError as e:
-                raise APIParameterError("Error while using configured credentials.")
+                message = f"Error while using configured credentials. Full exception: {e}"
+                logging.error(message)
+                raise APIParameterError(message)
 
         logging.info("Credentials loaded.")
 
@@ -123,18 +131,22 @@ class AWSTranscribeAPIWrapper:
         try:
             response = self.client.start_transcription_job(**transcribe_request)
         except Exception as e:
-            raise APITranscriptionJobError("Error happened when starting a transcription job"
-                                           "raised by the function `start_transcription_job`."
-                                           f"Full exception: {e}")
+            message = "Error happened when starting a transcription job" + \
+                      "raised by the function `start_transcription_job`." + \
+                      f"Full exception: {e}"
+            logging.error(message)
+            raise APITranscriptionJobError(message)
 
         logging.info(f"AWS transcribe job {job_name} submitted.")
 
         try:
             return response["TranscriptionJob"]["TranscriptionJobName"]
         except KeyError as e:
-            raise KeyError('Badly formed response, expect the keys such that:'
-                           'response["TranscriptionJob"]["TranscriptionJobName"] exists.'
-                           f'Full exception: {e}')
+            message = 'Badly formed response, expect the keys such that:' + \
+                      'response["TranscriptionJob"]["TranscriptionJobName"] exists.' + \
+                      f'Full exception: {e}'
+            logging.error(message)
+            raise KeyError(message)
 
     def get_list_jobs(self,
                       job_name_contains: AnyStr,
@@ -164,8 +176,9 @@ class AWSTranscribeAPIWrapper:
                 )
 
             except Exception as e:
-                raise Exception(f"Exception raised when trying to reach the page {i} of the job list."
-                                f"Full exception: {e}")
+                message = f"Exception raised when trying to reach the page {i} of the job list. Full exception: {e}"
+                logging.error(message)
+                raise APITranscriptionJobError(message)
 
             # If next_token is not None, it means there are more than one page, so we have to loop over them
             next_token = response.get("NextToken", None)
@@ -179,7 +192,7 @@ class AWSTranscribeAPIWrapper:
                     submitted_jobs: pd.DataFrame,
                     recipe_job_id: AnyStr,
                     display_json: bool,
-                    function: Callable,
+                    transcript_json_loader: Callable,
                     **kwargs):
 
         """
@@ -214,7 +227,7 @@ class AWSTranscribeAPIWrapper:
                     job_data = self._result_parser(path=submitted_jobs_dict[job_name]["path"],
                                                    display_json=display_json,
                                                    job=job,
-                                                   function=function,
+                                                   transcript_json_loader=transcript_json_loader,
                                                    **kwargs)
                     if job_data is not None:
                         res[job_name] = job_data
@@ -242,12 +255,8 @@ class AWSTranscribeAPIWrapper:
 
         """
 
-        try:
-            job_name = job.get("TranscriptionJobName")
-            job_status = job.get("TranscriptionJobStatus")
-        except Exception as e:
-            raise Exception('Badly formed response, missing keys in the JSON job result.'
-                            f'Full exception: {e}')
+        job_name = job.get("TranscriptionJobName")
+        job_status = job.get("TranscriptionJobStatus")
 
         # dataiku folder or custom folder for testing
         folder = kwargs["folder"]
@@ -265,7 +274,7 @@ class AWSTranscribeAPIWrapper:
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
         time_delta_min = (now - date_job_created).seconds/60
         if job_status in [self.QUEUED, self.IN_PROGRESS]:
-            if time_delta_min > TIMEOUT:
+            if time_delta_min > TIMEOUT_MIN:
                 job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
                 job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
             else:
@@ -279,21 +288,20 @@ class AWSTranscribeAPIWrapper:
                 job_data["language_code"] = job.get("LanguageCode")
                 job_data["language"] = SUPPORTED_LANGUAGES.get(job.get("LanguageCode"))
             except Exception as e:
-                raise Exception('Badly formed response, missing keys in the JSON job result.'
-                                f'Full exception: {e}')
+                message = 'Badly formed response, missing keys in the JSON job result.' + \
+                          f'Full exception: {e}'
+                logging.error(message)
+                raise ResponseFormatError(message)
             if display_json:
                 job_data["json"] = json_results
             logging.info(f"AWS transcribe job {job_name} completed with success.")
 
         else:  # job_status == FAILED
             # if the job failed, lets report the error in the corresponding column
-            try:
-                job_data["output_error_type"] = AWS_FAILURE
-                job_data["output_error_message"] = job.get("FailureReason")
-                logging.error(
-                    f"AWS transcribe job {job_name} failed. Failure reason: {job_data['output_error_message']}")
-            except Exception as e:
-                raise Exception('Badly formed response, missing keys in the JSON result to get failure reason.'
-                                f'Full exception: {e}')
+
+            job_data["output_error_type"] = AWS_FAILURE
+            job_data["output_error_message"] = job.get("FailureReason")
+            logging.error(
+                f"AWS transcribe job {job_name} failed. Failure reason: {job_data['output_error_message']}")
 
         return job_data

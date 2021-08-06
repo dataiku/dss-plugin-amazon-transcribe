@@ -46,6 +46,7 @@ class PluginParams:
             aws_session_token: str,
             aws_region_name: str,
             max_attempts: str,
+            input_df: pd.DataFrame,
             input_folder: dataiku.Folder,
             column_prefix: AnyStr = "api",
             input_folder_is_s3: bool = True,
