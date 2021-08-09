@@ -45,6 +45,10 @@ class ResponseFormatError(ValueError):
 
     pass
 
+class UnknownStatusError(ValueError):
+    """Custom exception raised when the AWS API returns a job status unknown."""
+    pass
+
 
 class AWSTranscribeAPIWrapper:
     API_EXCEPTIONS = (ClientError, BotoCoreError)
@@ -56,7 +60,7 @@ class AWSTranscribeAPIWrapper:
     def __init__(self):
         self.client = None
 
-    def get_client(self,
+    def build_client(self,
                    aws_access_key_id: AnyStr = None,
                    aws_secret_access_key: AnyStr = None,
                    aws_session_token: AnyStr = None,
@@ -97,8 +101,6 @@ class AWSTranscribeAPIWrapper:
                 raise APIParameterError(message)
 
         logging.info("Credentials loaded.")
-
-        return self.client
 
     def start_transcription_job(self,
                                 language: AnyStr,
@@ -304,7 +306,7 @@ class AWSTranscribeAPIWrapper:
                 job_data["json"] = json_results
             logging.info(f"AWS transcribe job {job_name} completed with success.")
 
-        else:  # job_status == FAILED
+        elif job_status == self.FAILED:
             # if the job failed, lets report the error in the corresponding column
 
             job_data["output_error_type"] = AWS_FAILURE
@@ -312,4 +314,7 @@ class AWSTranscribeAPIWrapper:
             logging.error(
                 f"AWS transcribe job {job_name} failed. Failure reason: {job_data['output_error_message']}")
 
+        else:
+            logging.warn(f"Unknown state encountered: {job_status}")
+            raise UnknownStatusError(f"Unknown state encountered: {job_status}")
         return job_data
