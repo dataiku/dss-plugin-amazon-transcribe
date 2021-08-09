@@ -283,13 +283,13 @@ class AWSTranscribeAPIWrapper:
         date_job_created = job.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
         time_delta_min = (now - date_job_created).seconds/60
-        if job_status in [self.QUEUED, self.IN_PROGRESS]:
+        if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
             if time_delta_min > TIMEOUT_MIN:
                 job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
                 job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
             else:
                 return None
-        elif job_status == self.COMPLETED:
+        elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
             json_results = transcript_json_loader(folder, job_name)
@@ -306,7 +306,7 @@ class AWSTranscribeAPIWrapper:
                 job_data["json"] = json_results
             logging.info(f"AWS transcribe job {job_name} completed with success.")
 
-        elif job_status == self.FAILED:
+        elif job_status == AWSTranscribeAPIWrapper.FAILED:
             # if the job failed, lets report the error in the corresponding column
 
             job_data["output_error_type"] = AWS_FAILURE
