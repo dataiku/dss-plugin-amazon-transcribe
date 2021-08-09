@@ -4,7 +4,7 @@ import pytest
 import botocore.session
 from botocore.stub import Stubber
 
-from amazon_transcribe_api_client import AWSTranscribeAPIWrapper, get_cpu
+from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 import amazon_transcribe_api_client
 
 
