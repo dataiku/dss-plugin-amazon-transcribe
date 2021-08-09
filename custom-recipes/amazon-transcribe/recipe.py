@@ -19,10 +19,10 @@ params = PluginParamsLoader(RecipeID.TRANSCRIBE).validate_load_params()
 
 api_wrapper = AWSTranscribeAPIWrapper()
 api_wrapper.build_client(aws_access_key_id=params.aws_access_key_id,
-                                aws_secret_access_key=params.aws_secret_access_key,
-                                aws_session_token=params.aws_session_token,
-                                aws_region_name=params.aws_region_name,
-                                max_attempts=params.max_attempts)
+                         aws_secret_access_key=params.aws_secret_access_key,
+                         aws_session_token=params.aws_session_token,
+                         aws_region_name=params.aws_region_name,
+                         max_attempts=params.max_attempts)
 
 
 parallelizer = DataFrameParallelizer(function=api_wrapper.start_transcription_job,

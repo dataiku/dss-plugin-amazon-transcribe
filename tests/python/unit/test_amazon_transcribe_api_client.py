@@ -35,7 +35,6 @@ class TestAWSTranscribeAPIWrapper:
                                                                 folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
                                                                 job_id="job_name")
 
-
     def test_start_transcription_job_succceed(self, stubber):
         """
         Test that start_transcription_job function of api wrapper returns the job name when succeeds.
@@ -56,6 +55,7 @@ class TestAWSTranscribeAPIWrapper:
 
     def test__result_parser(self):
         """ Test schema of the job result. """
+
         def fn(folder, job_name):
             return {
                 'results': {
@@ -64,6 +64,7 @@ class TestAWSTranscribeAPIWrapper:
                     ]
                 }
             }
+
         job = {
             "TranscriptionJobName": "",
             "TranscriptionJobStatus": self.api_wrapper.COMPLETED,

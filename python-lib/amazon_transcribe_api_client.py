@@ -28,23 +28,24 @@ JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
 TIMEOUT_MIN = 10
 
-def get_cpu():
-    return NUM_CPU
 
 class APIParameterError(ValueError):
     """Custom exception raised when the AWS api parameters chosen by the user are invalid."""
 
     pass
 
+
 class APITranscriptionJobError(Exception):
     """Custom exception raised when the AWS API raise an exception."""
 
     pass
 
+
 class ResponseFormatError(ValueError):
     """Custom exception raised when the response format is wrong."""
 
     pass
+
 
 class UnknownStatusError(ValueError):
     """Custom exception raised when the AWS API returns a job status unknown."""
@@ -62,12 +63,12 @@ class AWSTranscribeAPIWrapper:
         self.client = None
 
     def build_client(self,
-                   aws_access_key_id: AnyStr = None,
-                   aws_secret_access_key: AnyStr = None,
-                   aws_session_token: AnyStr = None,
-                   aws_region_name: AnyStr = None,
-                   max_attempts: int = 20
-                   ):
+                     aws_access_key_id: AnyStr = None,
+                     aws_secret_access_key: AnyStr = None,
+                     aws_session_token: AnyStr = None,
+                     aws_region_name: AnyStr = None,
+                     max_attempts: int = 20
+                     ):
         """
         Initialize the client by creating an AWS client with the specified credentials.
         """
@@ -243,8 +244,6 @@ class AWSTranscribeAPIWrapper:
                     if job_data is not None:
                         res[job_name] = job_data
 
-
-
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)
 
         job_results = pd.DataFrame.from_dict(res, orient='index')
@@ -283,7 +282,7 @@ class AWSTranscribeAPIWrapper:
         }
         date_job_created = job.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
-        time_delta_min = (now - date_job_created).seconds/60
+        time_delta_min = (now - date_job_created).seconds / 60
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
             if time_delta_min > TIMEOUT_MIN:
                 job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
@@ -316,6 +315,6 @@ class AWSTranscribeAPIWrapper:
                 f"AWS transcribe job {job_name} failed. Failure reason: {job_data['output_error_message']}")
 
         else:
-            logging.warn(f"Unknown state encountered: {job_status}")
+            logging.warning(f"Unknown state encountered: {job_status}")
             raise UnknownStatusError(f"Unknown state encountered: {job_status}")
         return job_data
