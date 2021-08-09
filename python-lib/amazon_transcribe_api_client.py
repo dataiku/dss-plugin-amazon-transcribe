@@ -32,16 +32,17 @@ def get_cpu():
     return NUM_CPU
 
 class APIParameterError(ValueError):
-    """Custom exception raised when the AWS api parameters chosen by the user are invalid"""
+    """Custom exception raised when the AWS api parameters chosen by the user are invalid."""
 
     pass
 
 class APITranscriptionJobError(Exception):
-    """Custom exception raised when the AWS API raise an exception"""
+    """Custom exception raised when the AWS API raise an exception."""
 
     pass
 
 class ResponseFormatError(ValueError):
+    """Custom exception raised when the response format is wrong."""
 
     pass
 
