@@ -1,43 +1,58 @@
-import pandas as pd
+from datetime import datetime
 import pytest
-# import pytest_mock
+
+import botocore.session
+from botocore.stub import Stubber
+
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper, get_cpu
 import amazon_transcribe_api_client
-import uuid
 
 
 class TestAWSTranscribeAPIWrapper:
 
     def setup_class(self):
-        self.client = AWSTranscribeAPIWrapper()
-        print("SETUP !!!", self.client)
+        self.api_wrapper = AWSTranscribeAPIWrapper()
+        self.api_wrapper.client = botocore.session.get_session().create_client("transcribe", region_name="eu-west-1")
 
-    def test_start_transcription_job(self, mocker):
+    @pytest.fixture(autouse=True)
+    def stubber(self):
+        with Stubber(self.api_wrapper.client) as stubber:
+            yield stubber
+            stubber.assert_no_pending_responses()
+
+    def test_start_transcription_job_exception(self, stubber):
+        """
+        Test that start_transcription_job function raise an APITranscriptionJobError exception
+        when aws api raise an exception.
+        """
+        stubber.add_client_error('start_transcription_job', "BadRequestException")
+        stubber.activate()
+
+        with pytest.raises(amazon_transcribe_api_client.APITranscriptionJobError):
+            response = self.api_wrapper.start_transcription_job(language="auto",
+                                                                row={"path": "/test-fr.mp3"},
+                                                                folder_bucket="jplassmann-transcribe-plugin",
+                                                                folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
+                                                                job_id="job_name")
+
+
+    def test_start_transcription_job_succceed(self, stubber):
+        """
+        Test that start_transcription_job function of api wrapper returns the job name when succeeds.
+        """
+
+        stubber.add_response('start_transcription_job', {"TranscriptionJob": {"TranscriptionJobName": "job_name"}})
+        stubber.activate()
 
         # Wrong job name sent should raise Exception
-        with pytest.raises(Exception):
-            response = self.client.start_transcription_job(language="auto",
-                                                           row={"path": "/test-fr.mp3"},
-                                                           folder_bucket="jplassmann-transcribe-plugin",
-                                                           folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
-                                                           job_id="1 111")
-        # mocker.patch('AWSTranscribeAPIWrapper.client.start_transcription_job',
-        #              return_value={"TranscriptionJob": {"TranscriptionJobName": "name"}}
-        #              )
-        def mock_load(self):
-            return "test"
-        mocker.patch.object('botocore.client.BaseClient._make_api_call', mock_load)
-        actual = self.client.start_transcription_job(
-            language="auto",
-            row={"path": "/test-fr.mp3"},
-            folder_bucket="jplassmann-transcribe-plugin",
-            folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
-            job_id="1111"
-        )
-        expeceted = "test"
-        assert actual == expeceted
+        response = self.api_wrapper.start_transcription_job(language="auto",
+                                                            row={"path": "/test-fr.mp3"},
+                                                            folder_bucket="jplassmann-transcribe-plugin",
+                                                            folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
+                                                            job_id="job_name")
 
-        # assert type(response) == str,
+        assert type(response) == str
+        assert response == "job_name"
 
     def test__result_parser(self):
         """ Test schema of the job result. """
@@ -49,11 +64,17 @@ class TestAWSTranscribeAPIWrapper:
                     ]
                 }
             }
-        job_data = self.client._result_parser(
+        job = {
+            "TranscriptionJobName": "",
+            "TranscriptionJobStatus": self.api_wrapper.COMPLETED,
+            "CreationTime": datetime(year=2021, month=8, day=5, tzinfo=None),
+            "LanguageCode": "EN"
+        }
+        job_data = self.api_wrapper._result_parser(
             path='',
-            job={"TranscriptionJobName": "", "TranscriptionJobStatus": self.client.COMPLETED, "LanguageCode": "EN"},
+            job=job,
             display_json=False,
-            function=fn,
+            transcript_json_loader=fn,
             folder=''
         )
         assert "path" in job_data
@@ -63,29 +84,3 @@ class TestAWSTranscribeAPIWrapper:
         assert "language" in job_data
         assert "output_error_type" in job_data
         assert "output_error_message" in job_data
-
-    # def test_get_results(self):
-    #
-    #     def fn(folder, job_name):
-    #         return {
-    #             'results': {
-    #                 'transcripts': [
-    #                     {"transcript": 'ceci est un deuxième test.'}
-    #                 ]
-    #             }
-    #         }
-    #
-    #     aws_job_id = uuid.uuid4().hex
-    #     response = self.client.start_transcription_job(language="auto",
-    #                                                    row={"path": "/Test-fr-2.mp3"},
-    #                                                    folder_bucket="jplassmann-transcribe-plugin",
-    #                                                    folder_root_path="dataiku/DKU_TUTORIAL_BASICS_101/IDGRZLFi",
-    #                                                    job_id=aws_job_id)
-    #     submitted_jobs = pd.DataFrame.from_dict([{"path": "/Test-fr-2.mp3", "output_response": response}])
-    #     res = self.client.get_results(submitted_jobs=submitted_jobs,
-    #                                   recipe_job_id=aws_job_id,
-    #                                   display_json=False,
-    #                                   function=fn,
-    #                                   folder="")
-    #     transcript = res["transcript"][0]
-    #     assert transcript == 'ceci est un deuxième test.'

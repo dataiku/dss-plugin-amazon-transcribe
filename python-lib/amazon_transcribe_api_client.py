@@ -4,8 +4,6 @@ import logging
 import time
 import datetime
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm.auto import tqdm as tqdm_auto
 
 from typing import AnyStr, Dict, Callable, List
 
@@ -14,6 +12,7 @@ import pandas as pd
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError
 from botocore.exceptions import ClientError
+from botocore.exceptions import ParamValidationError
 from botocore.exceptions import NoRegionError
 
 from dku_constants import SLEEPING_TIME_BETWEEN_ROUNDS_SEC
@@ -54,13 +53,16 @@ class AWSTranscribeAPIWrapper:
     IN_PROGRESS = "IN_PROGRESS"
     FAILED = "FAILED"
 
-    def __init__(self,
-                 aws_access_key_id: AnyStr = None,
-                 aws_secret_access_key: AnyStr = None,
-                 aws_session_token: AnyStr = None,
-                 aws_region_name: AnyStr = None,
-                 max_attempts: int = 20
-                 ):
+    def __init__(self):
+        self.client = None
+
+    def get_client(self,
+                   aws_access_key_id: AnyStr = None,
+                   aws_secret_access_key: AnyStr = None,
+                   aws_session_token: AnyStr = None,
+                   aws_region_name: AnyStr = None,
+                   max_attempts: int = 20
+                   ):
         """
         Initialize the client by creating an AWS client with the specified credentials.
         """
@@ -96,6 +98,8 @@ class AWSTranscribeAPIWrapper:
 
         logging.info("Credentials loaded.")
 
+        return self.client
+
     def start_transcription_job(self,
                                 language: AnyStr,
                                 row: Dict = None,
@@ -130,12 +134,16 @@ class AWSTranscribeAPIWrapper:
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
-        except Exception as e:
+        except ClientError as e:
             message = "Error happened when starting a transcription job" + \
                       "raised by the function `start_transcription_job`." + \
                       f"Full exception: {e}"
             logging.error(message)
             raise APITranscriptionJobError(message)
+        except ParamValidationError as e:
+            message = f"The parameters you provided are incorrect. Full exception: {e}"
+            logging.error(message)
+            raise APIParameterError(message)
 
         logging.info(f"AWS transcribe job {job_name} submitted.")
 
