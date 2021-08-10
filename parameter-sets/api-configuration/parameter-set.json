@@ -88,6 +88,16 @@
             "defaultValue": 5,
             "minI": 1,
             "maxI": 100
+        },
+        {
+            "name": "parallel_workers",
+            "label": "Concurrency",
+            "description": "Number of threads calling the API in parallel (maximum 100). Increase to speed-up computation within the quota defined above.",
+            "type": "INT",
+            "mandatory": true,
+            "defaultValue": 4,
+            "minI": 1,
+            "maxI": 100
         }
     ]
 }
