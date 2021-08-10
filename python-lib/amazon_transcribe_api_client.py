@@ -26,7 +26,7 @@ AWS_FAILURE = "AWS_FAILURE"
 JOB_TIMEOUT_ERROR_TYPE = "JOB_TIMEOUT_ERROR"
 JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
-TIMEOUT_MIN = 10
+TIMEOUT_MIN = 60
 
 
 class APIParameterError(ValueError):
@@ -174,8 +174,8 @@ class AWSTranscribeAPIWrapper:
         next_token = None
         result = []
         i = 0
+        logging.info(f"Fetching list_transcription_jobs:")
         while True:
-            logging.info(f"Fetching list_transcription_jobs for page {i}")
 
             try:
                 args = {
@@ -198,6 +198,15 @@ class AWSTranscribeAPIWrapper:
             i += 1
             if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
                 break
+
+        for job in result:
+            date_job_created = job.get("CreationTime")
+            date_job_completion = job.get("CompletionTime")
+            if date_job_completion is None:
+                date_job_completion = datetime.datetime.now(tz=date_job_created.tzinfo)
+            time_delta_sec = (date_job_completion - date_job_created).seconds
+            logging.info(f"{job.get('TranscriptionJobStatus')} | {job.get('TranscriptionJobName')} | {time_delta_sec} sec")
+
         return result
 
     def get_results(self,
@@ -229,7 +238,7 @@ class AWSTranscribeAPIWrapper:
         #                             ...,
         #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
 
-        while len(submitted_jobs) != len(res):
+        while True:
             jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
 
             # loop over all jobs
@@ -243,6 +252,14 @@ class AWSTranscribeAPIWrapper:
                                                    **kwargs)
                     if job_data is not None:
                         res[job_name] = job_data
+
+            pending_jobs = [
+                job for job in jobs if job.get("TranscriptionJobName") not in res and \
+                                       job.get("TranscriptionJobStatus") in [AWSTranscribeAPIWrapper.QUEUED,
+                                                                             AWSTranscribeAPIWrapper.IN_PROGRESS]
+            ]
+            if len(pending_jobs) == 0:
+                break
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)
 
