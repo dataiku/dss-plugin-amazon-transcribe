@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import uuid
 from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 from dku_io_utils import read_json_from_folder, set_column_description
 from dkulib.core.parallelizer import DataFrameParallelizer
@@ -9,7 +10,7 @@ from plugin_params_loader import RecipeID
 # CONSTANT DEFINITION
 # ==============================================================================
 
-RECIPE_JOB_ID = dataiku.dku_custom_variables.get('jobId')
+RECIPE_JOB_ID = f"{dataiku.dku_custom_variables.get('jobId')}_{uuid.uuid4().hex}"
 
 # ==============================================================================
 # SETUP
