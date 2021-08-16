@@ -291,7 +291,7 @@ class AWSTranscribeAPIWrapper:
         }
 
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
-            return AWSTranscribeAPIWrapper.handle_job_duration(job, job_data)
+            return AWSTranscribeAPIWrapper.check_job_timeout(job, job_data)
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
@@ -323,8 +323,8 @@ class AWSTranscribeAPIWrapper:
         return job_data
 
     @staticmethod
-    def handle_job_duration(job_summary: Dict,
-                            job_res_data: Dict):
+    def check_job_timeout(job_summary: Dict,
+                          job_res_data: Dict):
         """
         If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
         be written in the column error of the Dataframe, otherwise it returns None.
@@ -332,10 +332,9 @@ class AWSTranscribeAPIWrapper:
 
         date_job_created = job_summary.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
-        time_delta_sec = (now - date_job_created).seconds
-        time_delta_min = time_delta_sec / 60
+        time_delta_min = (now - date_job_created).seconds / 60
         logging.info(
-            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_sec} sec")
+            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} sec")
         if time_delta_min > TIMEOUT_MIN:
             logging.error(f'Job {job_summary.get("TranscriptionJobName")} timeout!')
             job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
