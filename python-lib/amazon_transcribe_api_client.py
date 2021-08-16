@@ -325,8 +325,9 @@ class AWSTranscribeAPIWrapper:
     @staticmethod
     def handle_job_duration(job: Dict,
                             job_data: Dict):
-        """ If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
-            be written in the column error of the Dataframe, otherwise it returns None.
+        """
+        If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
+        be written in the column error of the Dataframe, otherwise it returns None.
         """
 
         date_job_created = job.get("CreationTime")
