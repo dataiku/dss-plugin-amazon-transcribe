@@ -228,7 +228,7 @@ class AWSTranscribeAPIWrapper:
 
         # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
         #                             ...,
-        #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
+        #                          "job_name_n: {"job_name": str, "transcript": str, ...} }
 
         while True:
             jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
