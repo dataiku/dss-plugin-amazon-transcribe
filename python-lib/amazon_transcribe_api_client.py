@@ -323,23 +323,23 @@ class AWSTranscribeAPIWrapper:
         return job_data
 
     @staticmethod
-    def handle_job_duration(job: Dict,
-                            job_data: Dict):
+    def handle_job_duration(job_summary: Dict,
+                            job_res_data: Dict):
         """
         If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
         be written in the column error of the Dataframe, otherwise it returns None.
         """
 
-        date_job_created = job.get("CreationTime")
+        date_job_created = job_summary.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
         time_delta_sec = (now - date_job_created).seconds
         time_delta_min = time_delta_sec / 60
         logging.info(
-            f"{job.get('TranscriptionJobStatus')} | {job.get('TranscriptionJobName')} | {time_delta_sec} sec")
+            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_sec} sec")
         if time_delta_min > TIMEOUT_MIN:
-            logging.error(f'Job {job.get("TranscriptionJobName")} timeout!')
-            job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
-            job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
-            return job_data
+            logging.error(f'Job {job_summary.get("TranscriptionJobName")} timeout!')
+            job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
+            job_res_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
+            return job_res_data
         else:
             return None
