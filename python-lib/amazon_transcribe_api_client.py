@@ -199,14 +199,6 @@ class AWSTranscribeAPIWrapper:
             if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
                 break
 
-        for job in result:
-            date_job_created = job.get("CreationTime")
-            date_job_completion = job.get("CompletionTime")
-            if date_job_completion is None:
-                date_job_completion = datetime.datetime.now(tz=date_job_created.tzinfo)
-            time_delta_sec = (date_job_completion - date_job_created).seconds
-            logging.info(f"{job.get('TranscriptionJobStatus')} | {job.get('TranscriptionJobName')} | {time_delta_sec} sec")
-
         return result
 
     def get_results(self,
@@ -266,8 +258,8 @@ class AWSTranscribeAPIWrapper:
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
 
-    def _result_parser(self,
-                       path: str,
+    @staticmethod
+    def _result_parser(path: str,
                        job: dict,
                        display_json: bool,
                        transcript_json_loader: Callable,
@@ -297,15 +289,9 @@ class AWSTranscribeAPIWrapper:
             "output_error_type": "",
             "output_error_message": ""
         }
-        date_job_created = job.get("CreationTime")
-        now = datetime.datetime.now(tz=date_job_created.tzinfo)
-        time_delta_min = (now - date_job_created).seconds / 60
+
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
-            if time_delta_min > TIMEOUT_MIN:
-                job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
-                job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
-            else:
-                return None
+            return AWSTranscribeAPIWrapper.handle_job_duration(job, job_data)
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
@@ -335,3 +321,24 @@ class AWSTranscribeAPIWrapper:
             logging.warning(f"Unknown state encountered: {job_status}")
             raise UnknownStatusError(f"Unknown state encountered: {job_status}")
         return job_data
+
+    @staticmethod
+    def handle_job_duration(job: Dict,
+                            job_data: Dict):
+        """ If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
+            be written in the column error of the Dataframe, otherwise it returns None.
+        """
+
+        date_job_created = job.get("CreationTime")
+        now = datetime.datetime.now(tz=date_job_created.tzinfo)
+        time_delta_sec = (now - date_job_created).seconds
+        time_delta_min = time_delta_sec / 60
+        logging.info(
+            f"{job.get('TranscriptionJobStatus')} | {job.get('TranscriptionJobName')} | {time_delta_sec} sec")
+        if time_delta_min > TIMEOUT_MIN:
+            logging.error(f'Job {job.get("TranscriptionJobName")} timeout!')
+            job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
+            job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
+            return job_data
+        else:
+            return None
