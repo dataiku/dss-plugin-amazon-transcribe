@@ -335,10 +335,10 @@ class AWSTranscribeAPIWrapper:
 
         date_job_created = job_summary.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
-        time_delta_min = (now - date_job_created).seconds / 60
+        time_delta_min = int((now - date_job_created).seconds / 60)
         logging.info(
-            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} sec")
-        if self.use_timeout and time_delta_min > self.timeout:
+            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} min")
+        if self.use_timeout and time_delta_min >= self.timeout:
             logging.error(f'Job {job_summary.get("TranscriptionJobName")} timeout!')
             job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
             job_res_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
