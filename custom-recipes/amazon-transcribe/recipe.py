@@ -31,8 +31,8 @@ parallelizer = DataFrameParallelizer(function=api_wrapper.start_transcription_jo
                                      exceptions_to_catch=api_wrapper.API_EXCEPTIONS)
 
 submitted_jobs = parallelizer.run(df=params.input_df,
-                                  folder_bucket=params.input_folder_bucket,
-                                  folder_root_path=params.input_folder_root_path,
+                                  folder_bucket=params.output_folder_bucket,
+                                  folder_root_path=params.output_folder_root_path,
                                   job_id=RECIPE_JOB_ID,
                                   language=params.language)
 
@@ -40,7 +40,7 @@ job_results = api_wrapper.get_results(submitted_jobs=submitted_jobs,
                                       recipe_job_id=RECIPE_JOB_ID,
                                       display_json=params.display_json,
                                       transcript_json_loader=read_json_from_folder,
-                                      folder=params.input_folder)
+                                      folder=params.output_folder)
 
 params.output_dataset.write_with_schema(job_results)
 set_column_description(params.output_dataset, {'path': 'Path to the audio file.'})
