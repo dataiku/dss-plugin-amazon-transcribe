@@ -31,8 +31,10 @@ parallelizer = DataFrameParallelizer(function=api_wrapper.start_transcription_jo
                                      exceptions_to_catch=api_wrapper.API_EXCEPTIONS)
 
 submitted_jobs = parallelizer.run(df=params.input_df,
-                                  folder_bucket=params.output_folder_bucket,
-                                  folder_root_path=params.output_folder_root_path,
+                                  input_folder_bucket=params.input_folder_bucket,
+                                  input_folder_root_path=params.input_folder_root_path,
+                                  output_folder_bucket=params.output_folder_bucket,
+                                  output_folder_root_path=params.output_folder_root_path,
                                   job_id=RECIPE_JOB_ID,
                                   language=params.language)
 

@@ -53,6 +53,10 @@ class PluginParams:
             input_folder_bucket: AnyStr = "",
             input_folder_root_path: AnyStr = "",
             output_dataset: dataiku.Dataset = None,
+            output_folder: dataiku.Folder = None,
+            output_folder_is_s3: bool = True,
+            output_folder_bucket: AnyStr = "",
+            output_folder_root_path: AnyStr = "",
             language: AnyStr = "auto",
             display_json: bool = False,
             timeout_min: int = 120,
@@ -188,6 +192,8 @@ class PluginParamsLoader:
 
         if output_params['output_folder'] is None:
             output_params['output_folder'] = input_params['input_folder']
+            output_params["output_folder_bucket"] = input_params["input_folder_bucket"]
+            output_params["output_folder_root_path"] = input_params["input_folder_root_path"]
 
         plugin_params = PluginParams(
             batch_support=self.batch_support,

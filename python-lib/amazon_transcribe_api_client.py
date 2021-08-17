@@ -110,8 +110,10 @@ class AWSTranscribeAPIWrapper:
     def start_transcription_job(self,
                                 language: AnyStr,
                                 row: Dict = None,
-                                folder_bucket: AnyStr = "",
-                                folder_root_path: AnyStr = "",
+                                input_folder_bucket: AnyStr = "",
+                                input_folder_root_path: AnyStr = "",
+                                output_folder_bucket: AnyStr = "",
+                                output_folder_root_path: AnyStr = "",
                                 job_id: AnyStr = ""
                                 ) -> AnyStr:
         """
@@ -130,9 +132,9 @@ class AWSTranscribeAPIWrapper:
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
-            "Media": {'MediaFileUri': f's3://{folder_bucket}/{folder_root_path}{audio_path}'},
-            "OutputBucketName": folder_bucket,
-            "OutputKey": f'{folder_root_path}/response/'
+            "Media": {'MediaFileUri': f's3://{input_folder_bucket}/{input_folder_root_path}{audio_path}'},
+            "OutputBucketName": output_folder_bucket,
+            "OutputKey": f'{output_folder_root_path}/response/'
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
