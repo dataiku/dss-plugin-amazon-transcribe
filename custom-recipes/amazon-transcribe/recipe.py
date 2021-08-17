@@ -20,7 +20,7 @@ RECIPE_JOB_ID = f"{dataiku.dku_custom_variables.get('jobId')}_{uuid.uuid4().hex}
 params = PluginParamsLoader(RecipeID.TRANSCRIBE).validate_load_params()
 
 api_wrapper = AWSTranscribeAPIWrapper(use_timeout=params.use_timeout,
-                                      timeout_min=params.timeout)
+                                      timeout_min=params.timeout_min)
 api_wrapper.build_client(aws_access_key_id=params.aws_access_key_id,
                          aws_secret_access_key=params.aws_secret_access_key,
                          aws_session_token=params.aws_session_token,
