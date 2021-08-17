@@ -26,7 +26,6 @@ AWS_FAILURE = "AWS_FAILURE"
 JOB_TIMEOUT_ERROR_TYPE = "JOB_TIMEOUT_ERROR"
 JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
-TIMEOUT_MIN = 60
 
 
 class APIParameterError(ValueError):
@@ -59,8 +58,12 @@ class AWSTranscribeAPIWrapper:
     IN_PROGRESS = "IN_PROGRESS"
     FAILED = "FAILED"
 
-    def __init__(self):
+    def __init__(self,
+                 use_timeout: bool = False,
+                 timeout: int = 120):
         self.client = None
+        self.use_timeout = use_timeout
+        self.timeout = timeout
 
     def build_client(self,
                      aws_access_key_id: AnyStr = None,
@@ -258,8 +261,8 @@ class AWSTranscribeAPIWrapper:
         job_results = pd.DataFrame.from_dict(res, orient='index')
         return job_results
 
-    @staticmethod
-    def _result_parser(path: str,
+    def _result_parser(self,
+                       path: str,
                        job: dict,
                        display_json: bool,
                        transcript_json_loader: Callable,
@@ -291,7 +294,7 @@ class AWSTranscribeAPIWrapper:
         }
 
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
-            return AWSTranscribeAPIWrapper.check_job_timeout(job, job_data)
+            return self.check_job_timeout(job, job_data)
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
@@ -322,8 +325,8 @@ class AWSTranscribeAPIWrapper:
             raise UnknownStatusError(f"Unknown state encountered: {job_status}")
         return job_data
 
-    @staticmethod
-    def check_job_timeout(job_summary: Dict,
+    def check_job_timeout(self,
+                          job_summary: Dict,
                           job_res_data: Dict):
         """
         If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
@@ -335,7 +338,7 @@ class AWSTranscribeAPIWrapper:
         time_delta_min = (now - date_job_created).seconds / 60
         logging.info(
             f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} sec")
-        if time_delta_min > TIMEOUT_MIN:
+        if self.use_timeout and time_delta_min > self.timeout:
             logging.error(f'Job {job_summary.get("TranscriptionJobName")} timeout!')
             job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
             job_res_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE

@@ -55,6 +55,8 @@ class PluginParams:
             output_dataset: dataiku.Dataset = None,
             language: AnyStr = "auto",
             display_json: bool = False,
+            use_timeout: bool = False,
+            timeout: int = 120,
             parallel_workers: int = 4,
             **kwargs,
     ):
@@ -144,6 +146,17 @@ class PluginParamsLoader:
 
         if "display_json" in self.recipe_config:
             recipe_params["display_json"] = self.recipe_config["display_json"]
+
+        if "use_timeout" in self.recipe_config:
+            recipe_params["use_timeout"] = self.recipe_config["use_timeout"]
+            recipe_params["timeout"] = None
+            if recipe_params["use_timeout"]:
+                if "timeout" not in self.recipe_config:
+                    raise PluginParamValidationError({f"Timeout has to be set"})
+                elif self.recipe_config["timeout"] < 0:
+                    raise PluginParamValidationError({f"Timeout has to be larger than zero"})
+                else:
+                    recipe_params["timeout"] = self.recipe_config["timeout"]
 
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
