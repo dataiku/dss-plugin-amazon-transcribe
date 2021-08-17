@@ -35,6 +35,15 @@
             "required": true,
             "acceptsDataset": true,
             "acceptsManagedFolder": false
+        },
+        {
+            "name": "output_folder",
+            "label": "Output managed folder",
+            "description": "Managed folder connected to S3 bucket that contains the raw results from the AWS jobs.",
+            "arity": "UNARY",
+            "required": false,
+            "acceptsDataset": false,
+            "acceptsManagedFolder": true
         }
 //        {
 //            "name": "errors_output",

@@ -105,6 +105,24 @@ class PluginParamsLoader:
             raise PluginParamValidationError("Please specify output dataset")
         output_params["output_dataset"] = dataiku.Dataset(output_dataset_names[0])
 
+        # Optional output folder
+        output_folder_names = get_output_names_for_role("output_folder")
+        if len(output_folder_names) == 0:
+            output_params["output_folder"] = None
+        else:
+            output_params["output_folder"] = dataiku.Folder(output_folder_names[0])
+
+            output_folder_type = output_params["output_folder"].get_info().get("type", "")
+            output_params["output_folder_is_s3"] = output_folder_type == "S3"
+            if output_params["output_folder_is_s3"]:
+                output_folder_access_info = output_params["output_folder"].get_info().get("accessInfo", {})
+                output_params["output_folder_bucket"] = output_folder_access_info.get("bucket")
+                output_params["output_folder_root_path"] = str(output_folder_access_info.get("root", ""))[1:]
+                logging.info("Output folder is stored on S3")
+            else:
+                logging.info(f"Output folder is not stored on S3 ({output_folder_type})")
+                raise PluginParamValidationError("Output folder not stored on S3")
+
         return output_params
 
 
@@ -167,6 +185,9 @@ class PluginParamsLoader:
         output_params = self.validate_output_params()
         preset_params = self.validate_preset_params()
         recipe_params = self.validate_recipe_params()
+
+        if output_params['output_folder'] is None:
+            output_params['output_folder'] = input_params['input_folder']
 
         plugin_params = PluginParams(
             batch_support=self.batch_support,

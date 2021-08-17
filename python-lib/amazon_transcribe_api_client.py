@@ -332,7 +332,7 @@ class AWSTranscribeAPIWrapper:
         If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
         be written in the column error of the Dataframe, otherwise it returns None.
         """
-        
+
         date_job_created = job_summary.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
         time_delta_min = int((now - date_job_created).seconds / 60)
