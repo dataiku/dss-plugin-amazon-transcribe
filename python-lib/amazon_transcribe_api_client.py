@@ -60,10 +60,10 @@ class AWSTranscribeAPIWrapper:
 
     def __init__(self,
                  use_timeout: bool = False,
-                 timeout: int = 120):
+                 timeout_min: int = 120):
         self.client = None
         self.use_timeout = use_timeout
-        self.timeout = timeout
+        self.timeout_min = timeout_min
 
     def build_client(self,
                      aws_access_key_id: AnyStr = None,
@@ -339,7 +339,7 @@ class AWSTranscribeAPIWrapper:
         logging.info(
             f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} min")
         if self.use_timeout and time_delta_min >= self.timeout:
-            logging.error(f'Job {job_summary.get("TranscriptionJobName")} timeout!')
+            logging.warning(f'Job {job_summary.get("TranscriptionJobName")} canceled after a timeout of {self.timeout_min} minutes!')
             job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
             job_res_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
             return job_res_data

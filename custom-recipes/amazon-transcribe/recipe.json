@@ -217,7 +217,7 @@
             "description": "Time in minutes after which the AWS job return an error if it is not completed",
             "mandatory": false,
             "defaultValue": "120",
-            "visibilityCondition": "model.use_timeout == truecd "
+            "visibilityCondition": "model.use_timeout == true"
         },
         {
           "name": "separator_configuration",

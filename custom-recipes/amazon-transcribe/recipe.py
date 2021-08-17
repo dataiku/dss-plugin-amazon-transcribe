@@ -11,7 +11,7 @@ from plugin_params_loader import RecipeID
 # CONSTANT/PATTERN DEFINITION
 # ==============================================================================
 
-RECIPE_JOB_ID_PATTERN = f"{dataiku.dku_custom_variables.get('jobId')}_{uuid.uuid4().hex}"
+RECIPE_JOB_ID = f"{dataiku.dku_custom_variables.get('jobId')}_{uuid.uuid4().hex}"
 
 # ==============================================================================
 # SETUP
@@ -20,7 +20,7 @@ RECIPE_JOB_ID_PATTERN = f"{dataiku.dku_custom_variables.get('jobId')}_{uuid.uuid
 params = PluginParamsLoader(RecipeID.TRANSCRIBE).validate_load_params()
 
 api_wrapper = AWSTranscribeAPIWrapper(use_timeout=params.use_timeout,
-                                      timeout=params.timeout)
+                                      timeout_min=params.timeout)
 api_wrapper.build_client(aws_access_key_id=params.aws_access_key_id,
                          aws_secret_access_key=params.aws_secret_access_key,
                          aws_session_token=params.aws_session_token,
@@ -33,11 +33,11 @@ parallelizer = DataFrameParallelizer(function=api_wrapper.start_transcription_jo
 submitted_jobs = parallelizer.run(df=params.input_df,
                                   folder_bucket=params.input_folder_bucket,
                                   folder_root_path=params.input_folder_root_path,
-                                  job_id=RECIPE_JOB_ID_PATTERN,
+                                  job_id=RECIPE_JOB_ID,
                                   language=params.language)
 
 job_results = api_wrapper.get_results(submitted_jobs=submitted_jobs,
-                                      recipe_job_id=RECIPE_JOB_ID_PATTERN,
+                                      recipe_job_id=RECIPE_JOB_ID,
                                       display_json=params.display_json,
                                       transcript_json_loader=read_json_from_folder,
                                       folder=params.input_folder)
