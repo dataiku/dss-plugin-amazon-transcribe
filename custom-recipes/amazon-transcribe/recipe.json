@@ -203,6 +203,23 @@
             "defaultValue": false
         },
         {
+            "name": "use_timeout",
+            "label": "Use Timeout",
+            "type": "BOOLEAN",
+            "description": "Raise a timeout error in the error column if the job is longer than the specified timeout.",
+            "mandatory": true,
+            "defaultValue": false
+        },
+        {
+            "name": "timeout",
+            "label": "timeout (min)",
+            "type": "INT",
+            "description": "Time in minutes after which the AWS job return an error if it is not completed",
+            "mandatory": false,
+            "defaultValue": "120",
+            "visibilityCondition": "model.use_timeout == truecd "
+        },
+        {
           "name": "separator_configuration",
           "label": "Configuration",
           "type": "SEPARATOR"
