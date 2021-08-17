@@ -58,6 +58,7 @@ unit.xml
 .hypothesis/
 .pytest_cache/
 cover/
+credentials.py
 
 # Translations
 *.mo
