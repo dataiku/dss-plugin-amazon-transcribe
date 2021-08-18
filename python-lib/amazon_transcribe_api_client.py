@@ -185,6 +185,7 @@ class AWSTranscribeAPIWrapper:
             try:
                 args = {
                     "JobNameContains": job_name_contains,
+                    "MaxResults": 100
                 }
                 if next_token is not None:
                     args["NextToken"] = next_token
