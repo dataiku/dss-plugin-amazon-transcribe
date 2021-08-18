@@ -237,7 +237,7 @@ class AWSTranscribeAPIWrapper:
 
         while True:
             jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
-
+            print("JOBS: ", jobs)
             # loop over all jobs
             for job in jobs:
                 job_name = job.get("TranscriptionJobName")
