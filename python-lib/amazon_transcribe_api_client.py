@@ -198,6 +198,7 @@ class AWSTranscribeAPIWrapper:
                 raise APITranscriptionJobError(message)
 
             # If next_token is not None, it means there are more than one page, so we have to loop over them
+            print(f"WEIRD RESPONSE {i}: {response}")
             next_token = response.get("NextToken", None)
             result += response.get("TranscriptionJobSummaries", [])
             i += 1
