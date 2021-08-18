@@ -203,7 +203,7 @@ class AWSTranscribeAPIWrapper:
             next_token = response.get("NextToken", None)
             result += response.get("TranscriptionJobSummaries", [])
             i += 1
-            if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
+            if next_token is None:
                 break
 
         return result
