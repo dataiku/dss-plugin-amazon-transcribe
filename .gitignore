@@ -58,6 +58,7 @@ unit.xml
 .hypothesis/
 .pytest_cache/
 cover/
+credentials.py
 
 # Translations
 *.mo
@@ -231,3 +232,5 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 .vscode/settings.json
 .idea
+
+tests/allure_report/*

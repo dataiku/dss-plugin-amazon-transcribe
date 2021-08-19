@@ -26,7 +26,6 @@ AWS_FAILURE = "AWS_FAILURE"
 JOB_TIMEOUT_ERROR_TYPE = "JOB_TIMEOUT_ERROR"
 JOB_TIMEOUT_ERROR_MESSAGE = "The job duration lasted more than the timeout."
 NUM_CPU = 2
-TIMEOUT_MIN = 10
 
 
 class APIParameterError(ValueError):
@@ -59,8 +58,12 @@ class AWSTranscribeAPIWrapper:
     IN_PROGRESS = "IN_PROGRESS"
     FAILED = "FAILED"
 
-    def __init__(self):
+    def __init__(self,
+                 use_timeout: bool = False,
+                 timeout_min: int = 120):
         self.client = None
+        self.use_timeout = use_timeout
+        self.timeout_min = timeout_min
 
     def build_client(self,
                      aws_access_key_id: AnyStr = None,
@@ -77,7 +80,8 @@ class AWSTranscribeAPIWrapper:
             logging.info("Attempting to load credentials from environment.")
             try:
                 self.client = boto3.client(
-                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
+                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts,
+                                                                      "mode": "adaptive"})
                 )
             except NoRegionError as e:
                 message = "The region could not be loaded from environment variables. " + \
@@ -107,8 +111,10 @@ class AWSTranscribeAPIWrapper:
     def start_transcription_job(self,
                                 language: AnyStr,
                                 row: Dict = None,
-                                folder_bucket: AnyStr = "",
-                                folder_root_path: AnyStr = "",
+                                input_folder_bucket: AnyStr = "",
+                                input_folder_root_path: AnyStr = "",
+                                output_folder_bucket: AnyStr = "",
+                                output_folder_root_path: AnyStr = "",
                                 job_id: AnyStr = ""
                                 ) -> AnyStr:
         """
@@ -127,9 +133,9 @@ class AWSTranscribeAPIWrapper:
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
-            "Media": {'MediaFileUri': f's3://{folder_bucket}/{folder_root_path}{audio_path}'},
-            "OutputBucketName": folder_bucket,
-            "OutputKey": f'{folder_root_path}/response/'
+            "Media": {'MediaFileUri': f's3://{input_folder_bucket}/{input_folder_root_path}{audio_path}'},
+            "OutputBucketName": output_folder_bucket,
+            "OutputKey": f'{output_folder_root_path}/response/'
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
@@ -174,12 +180,13 @@ class AWSTranscribeAPIWrapper:
         next_token = None
         result = []
         i = 0
+        logging.info(f"Fetching list_transcription_jobs:")
         while True:
-            logging.info(f"Fetching list_transcription_jobs for page {i}")
 
             try:
                 args = {
                     "JobNameContains": job_name_contains,
+                    "MaxResults": 100
                 }
                 if next_token is not None:
                     args["NextToken"] = next_token
@@ -196,8 +203,9 @@ class AWSTranscribeAPIWrapper:
             next_token = response.get("NextToken", None)
             result += response.get("TranscriptionJobSummaries", [])
             i += 1
-            if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
+            if next_token is None:
                 break
+
         return result
 
     def get_results(self,
@@ -227,9 +235,9 @@ class AWSTranscribeAPIWrapper:
 
         # res will be of the form {"job_name_0": {"job_name": str, "transcript": str, ...},
         #                             ...,
-        #                          "job_name_n: {"job_name": str, "transcript": str, ...}}
+        #                          "job_name_n: {"job_name": str, "transcript": str, ...} }
 
-        while len(submitted_jobs) != len(res):
+        while True:
             jobs = self.get_list_jobs(job_name_contains=recipe_job_id)
 
             # loop over all jobs
@@ -243,6 +251,14 @@ class AWSTranscribeAPIWrapper:
                                                    **kwargs)
                     if job_data is not None:
                         res[job_name] = job_data
+
+            pending_jobs = [
+                job for job in jobs if job.get("TranscriptionJobName") not in res and \
+                                       job.get("TranscriptionJobStatus") in [AWSTranscribeAPIWrapper.QUEUED,
+                                                                             AWSTranscribeAPIWrapper.IN_PROGRESS]
+            ]
+            if len(pending_jobs) == 0:
+                break
 
             time.sleep(SLEEPING_TIME_BETWEEN_ROUNDS_SEC)
 
@@ -280,15 +296,9 @@ class AWSTranscribeAPIWrapper:
             "output_error_type": "",
             "output_error_message": ""
         }
-        date_job_created = job.get("CreationTime")
-        now = datetime.datetime.now(tz=date_job_created.tzinfo)
-        time_delta_min = (now - date_job_created).seconds / 60
+
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
-            if time_delta_min > TIMEOUT_MIN:
-                job_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
-                job_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
-            else:
-                return None
+            return self.check_job_timeout(job, job_data)
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
@@ -318,3 +328,24 @@ class AWSTranscribeAPIWrapper:
             logging.warning(f"Unknown state encountered: {job_status}")
             raise UnknownStatusError(f"Unknown state encountered: {job_status}")
         return job_data
+
+    def check_job_timeout(self,
+                          job_summary: Dict,
+                          job_res_data: Dict):
+        """
+        If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
+        be written in the column error of the Dataframe, otherwise it returns None.
+        """
+
+        date_job_created = job_summary.get("CreationTime")
+        now = datetime.datetime.now(tz=date_job_created.tzinfo)
+        time_delta_min = int((now - date_job_created).seconds / 60)
+        logging.info(
+            f"{job_summary.get('TranscriptionJobStatus')} | {job_summary.get('TranscriptionJobName')} | {time_delta_min} min")
+        if self.use_timeout and time_delta_min >= self.timeout_min:
+            logging.warning(f'Job {job_summary.get("TranscriptionJobName")} canceled after a timeout of {self.timeout_min} minutes!')
+            job_res_data["output_error_type"] = JOB_TIMEOUT_ERROR_TYPE
+            job_res_data["output_error_message"] = JOB_TIMEOUT_ERROR_MESSAGE
+            return job_res_data
+        else:
+            return None
