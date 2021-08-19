@@ -80,7 +80,8 @@ class AWSTranscribeAPIWrapper:
             logging.info("Attempting to load credentials from environment.")
             try:
                 self.client = boto3.client(
-                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
+                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts,
+                                                                      "mode": "adaptive"})
                 )
             except NoRegionError as e:
                 message = "The region could not be loaded from environment variables. " + \
