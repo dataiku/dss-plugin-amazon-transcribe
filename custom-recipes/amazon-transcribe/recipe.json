@@ -35,16 +35,16 @@
             "required": true,
             "acceptsDataset": true,
             "acceptsManagedFolder": false
+        },
+        {
+            "name": "output_folder",
+            "label": "Output managed folder",
+            "description": "Managed folder connected to S3 bucket that contains the raw results from the AWS jobs. This folder is optional and the raw results are written in the input folder when no output folder is selected.",
+            "arity": "UNARY",
+            "required": false,
+            "acceptsDataset": false,
+            "acceptsManagedFolder": true
         }
-//        {
-//            "name": "errors_output",
-//            "label": "errors output displayed name",
-//            "description": "what errors output means",
-//            "arity": "UNARY",
-//            "required": false,
-//            "acceptsDataset": true
-//        }
-        // ...
     ],
     /* The field "params" holds a list of all the params
        for wich the user will be prompted for values in the Settings tab of the recipe.

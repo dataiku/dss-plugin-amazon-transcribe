@@ -80,7 +80,8 @@ class AWSTranscribeAPIWrapper:
             logging.info("Attempting to load credentials from environment.")
             try:
                 self.client = boto3.client(
-                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts})
+                    service_name="transcribe", config=Config(retries={"max_attempts": max_attempts,
+                                                                      "mode": "adaptive"})
                 )
             except NoRegionError as e:
                 message = "The region could not be loaded from environment variables. " + \
@@ -110,8 +111,10 @@ class AWSTranscribeAPIWrapper:
     def start_transcription_job(self,
                                 language: AnyStr,
                                 row: Dict = None,
-                                folder_bucket: AnyStr = "",
-                                folder_root_path: AnyStr = "",
+                                input_folder_bucket: AnyStr = "",
+                                input_folder_root_path: AnyStr = "",
+                                output_folder_bucket: AnyStr = "",
+                                output_folder_root_path: AnyStr = "",
                                 job_id: AnyStr = ""
                                 ) -> AnyStr:
         """
@@ -130,9 +133,9 @@ class AWSTranscribeAPIWrapper:
 
         transcribe_request = {
             "TranscriptionJobName": job_name,
-            "Media": {'MediaFileUri': f's3://{folder_bucket}/{folder_root_path}{audio_path}'},
-            "OutputBucketName": folder_bucket,
-            "OutputKey": f'{folder_root_path}/response/'
+            "Media": {'MediaFileUri': f's3://{input_folder_bucket}/{input_folder_root_path}{audio_path}'},
+            "OutputBucketName": output_folder_bucket,
+            "OutputKey": f'{output_folder_root_path}/response/'
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
@@ -183,6 +186,7 @@ class AWSTranscribeAPIWrapper:
             try:
                 args = {
                     "JobNameContains": job_name_contains,
+                    "MaxResults": 100
                 }
                 if next_token is not None:
                     args["NextToken"] = next_token
@@ -199,7 +203,7 @@ class AWSTranscribeAPIWrapper:
             next_token = response.get("NextToken", None)
             result += response.get("TranscriptionJobSummaries", [])
             i += 1
-            if len(response.get("TranscriptionJobSummaries", [])) == 0 or next_token is None:
+            if next_token is None:
                 break
 
         return result
@@ -332,7 +336,7 @@ class AWSTranscribeAPIWrapper:
         If the job duration is longer than the timeout setup previously, a JOB_TIMEOUT_ERROR will
         be written in the column error of the Dataframe, otherwise it returns None.
         """
-        
+
         date_job_created = job_summary.get("CreationTime")
         now = datetime.datetime.now(tz=date_job_created.tzinfo)
         time_delta_min = int((now - date_job_created).seconds / 60)
