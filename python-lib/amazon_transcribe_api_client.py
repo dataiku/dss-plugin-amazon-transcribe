@@ -293,9 +293,12 @@ class AWSTranscribeAPIWrapper:
             "transcript": "",
             "language_code": "",
             "language": "",
+            "json": "",
             "output_error_type": "",
             "output_error_message": ""
         }
+        if not display_json:
+            del job_data["json"]
 
         if job_status in [AWSTranscribeAPIWrapper.QUEUED, AWSTranscribeAPIWrapper.IN_PROGRESS]:
             return self.check_job_timeout(job, job_data)

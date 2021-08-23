@@ -5,13 +5,13 @@
         // label: name of the recipe as displayed, should be short
         "label": "Amazon Transcribe",
         // description: longer string to help end users understand what this recipe does
-        "description": "Recipe that takes as input a managed folder connected with an S3 bucket containing audio files and output a dataset containing their transcripts",
+        "description": "Recipe that takes as input a managed folder connected with an S3 bucket containing audio files and outputs a dataset containing their transcripts",
         // icon: must be one of the FontAwesome 3.2.1 icons, complete list here at https://fontawesome.com/v3.2.1/icons/
         "icon": "icon-puzzle-piece"
     },
     "kind": "PYTHON",
     // Inputs and outputs are defined by roles. In the recipe's I/O tab, the user can associate one
-    // or more dataset to each input and output role.
+    // or more datasets to each input and output role.
     // The "arity" field indicates whether the user can associate several datasets to the role ('NARY')
     // or at most one ('UNARY'). The "required" field indicates whether the user is allowed to
     // associate no dataset with the role.
@@ -47,7 +47,7 @@
         }
     ],
     /* The field "params" holds a list of all the params
-       for wich the user will be prompted for values in the Settings tab of the recipe.
+       for wich, the user will be prompted for values in the Settings tab of the recipe.
 
        The available parameter types include:
        STRING, STRINGS, INT, DOUBLE, BOOLEAN, SELECT, MULTISELECT, MAP, TEXTAREA, PRESET, COLUMN, COLUMNS
@@ -224,7 +224,7 @@
         }
         // The 'COLUMNS' type works in the same way, except that it is a list of strings.
     ],
-    // The field "resourceKeys" holds a list of keys that allows to limit the number
+    // The field "resourceKeys" holds a list of keys that allows limiting the number
     // of concurrent executions and activities triggered by this recipe.
     //
     // Administrators can configure the limit per resource key in the Administration > Settings > Flow build
