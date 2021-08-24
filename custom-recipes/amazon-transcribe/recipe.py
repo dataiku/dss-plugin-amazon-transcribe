@@ -45,4 +45,14 @@ job_results = api_wrapper.get_results(submitted_jobs=submitted_jobs,
                                       folder=params.output_folder)
 
 params.output_dataset.write_with_schema(job_results)
-set_column_description(params.output_dataset, {'path': 'Path to the audio file.'})
+column_description = {
+    'path': 'Path to the audio file in the S3 bucket.',
+    'job_name': 'Name to identify the job in Amazon Transcribe.',
+    'transcript': 'Transcript of the audio file.',
+    'language': 'Language detected or setup by the user.',
+    'language_code': 'Language code detected or setup by the user.',
+    'json': 'Raw API response in JSON form.',
+    'output_error_type': 'The error type in case an error occurs.',
+    'output_error_message': 'The error message in case an error occurs.'
+}
+set_column_description(params.output_dataset, column_description)
