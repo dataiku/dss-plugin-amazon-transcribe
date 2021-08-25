@@ -49,33 +49,33 @@
             "name": "separator_authentification",
             "label": "Authentification",
             "type": "SEPARATOR",
-            "description": "Please refer to the Amazon documentation: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys"
+            "description": "Please refer to the Amazon documentation: https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys \n Docs: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables"
         },
         {
             "name": "aws_access_key_id",
             "label": "AWS access key id",
-            "description": "AWS access key as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "description": "AWS access key as string. If empty, checks environment variables.",
             "type": "STRING",
             "mandatory": false
         },
         {
             "name": "aws_secret_access_key",
             "label": "AWS secret access key",
-            "description": "AWS secret access key as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "description": "AWS secret access key as string. If empty, checks environment variables.",
             "type": "PASSWORD",
             "mandatory": false
         },
         {
             "name": "aws_session_token",
             "label": "AWS session token",
-            "description": "Optional AWS session token as string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables).",
+            "description": "Optional AWS session token as string. If empty, checks environment variables.",
             "type": "STRING",
             "mandatory": false
         },
         {
             "name": "aws_region_name",
             "label": "AWS region name",
-            "description": "AWS region name as a string. If empty, checks environment variables (https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html#using-environment-variables).",
+            "description": "AWS region name as a string. If empty, checks environment variables.",
             "type": "STRING",
             "mandatory": false
         },
