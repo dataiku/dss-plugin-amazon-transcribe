@@ -204,7 +204,7 @@
         },
         {
             "name": "timeout_min",
-            "label": "timeout (min)",
+            "label": "Timeout (min)",
             "type": "INT",
             "description": "Time in minutes after which the AWS transcription job will be abandoned resulting in an error message for a given file in the output dataset. Leave empty for unlimited waiting time.",
             "mandatory": false,
