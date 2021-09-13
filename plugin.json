@@ -1,5 +1,5 @@
 {
-    "id": "amazon-transcribe",
+    "id": "nlp-amazon-transcribe",
     "version": "1.0.0",
     "meta": {
         "label": "Amazon Transcribe",
