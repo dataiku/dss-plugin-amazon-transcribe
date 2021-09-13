@@ -7,7 +7,7 @@
         // description: longer string to help end users understand what this recipe does
         "description": "Recipe that takes as input a managed folder connected with an S3 bucket containing audio files and outputs a dataset containing their transcripts",
         // icon: must be one of the FontAwesome 3.2.1 icons, complete list here at https://fontawesome.com/v3.2.1/icons/
-        "icon": "icon-puzzle-piece"
+        "icon": "icon-volume-up"
     },
     "kind": "PYTHON",
     // Inputs and outputs are defined by roles. In the recipe's I/O tab, the user can associate one
