@@ -1,5 +1,5 @@
 {
-    "id": "dss-plugin-amazon-transcribe",
+    "id": "amazon-transcribe",
     "version": "1.0.0",
     "meta": {
         "label": "Amazon Transcribe",
@@ -8,7 +8,7 @@
         "author": "Dataiku (Jeremy PLASSMANN)",
         "icon": "icon-volume-up",
         "licenseInfo": "Apache Software License",
-        "url": "https://www.dataiku.com/product/plugins/dss-plugin-amazon-transcribe/",
+        "url": "https://www.dataiku.com/product/plugins/amazon-transcribe/",
         "tags": [
             "v1.0.0"
         ],
