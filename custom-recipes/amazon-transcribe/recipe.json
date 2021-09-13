@@ -23,7 +23,8 @@
             "arity": "UNARY",
             "required": true,
             "acceptsDataset": false,
-            "acceptsManagedFolder": true
+            "acceptsManagedFolder": true,
+            "mustBeStrictlyType": "EC2"
         }
     ],
     "outputRoles": [
@@ -43,7 +44,8 @@
             "arity": "UNARY",
             "required": false,
             "acceptsDataset": false,
-            "acceptsManagedFolder": true
+            "acceptsManagedFolder": true,
+            "mustBeStrictlyType": "EC2"
         }
     ],
     /* The field "params" holds a list of all the params
