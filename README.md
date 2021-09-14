@@ -2,7 +2,7 @@
 
 ![Build status](https://github.com/dataiku/dss-plugin-amazon-transcribe/actions/workflows/auto-make.yml/badge.svg) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/dataiku/dss-plugin-amazon-transcribe?logo=github) ![Support level](https://img.shields.io/badge/support-Unsupported-orange)
 
-This Dataiku DSS plugin provides a recipe to transcribe a text column to another language with [Amazon Transcribe](https://aws.amazon.com/transcribe/).
+This Dataiku DSS plugin provides a recipe to transcribe audio files with [Amazon Transcribe](https://aws.amazon.com/transcribe/).
 
 Documentation: https://www.dataiku.com/product/plugins/amazon-transcribe/
 
