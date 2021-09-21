@@ -1,6 +1,6 @@
 {
     "id": "amazon-transcribe",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "meta": {
         "label": "Amazon Transcribe",
         "category": "Natural Language Processing",
