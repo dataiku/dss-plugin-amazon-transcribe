@@ -10,6 +10,8 @@
         "icon": "icon-volume-up"
     },
     "kind": "PYTHON",
+
+    "selectableFromFolder": "input_folder",
     // Inputs and outputs are defined by roles. In the recipe's I/O tab, the user can associate one
     // or more datasets to each input and output role.
     // The "arity" field indicates whether the user can associate several datasets to the role ('NARY')
