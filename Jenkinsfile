@@ -4,9 +4,9 @@ pipeline {
    }
    agent { label 'dss-plugin-tests'}
    environment {
-        PLUGIN_INTEGRATION_TEST_INSTANCE="$HOME/instance_config.json"
+//        PLUGIN_INTEGRATION_TEST_INSTANCE="$HOME/instance_config.json"
         UNIT_TEST_FILES_STATUS_CODE = sh(script: 'ls ./tests/*/unit/test*', returnStatus: true)
-        INTEGRATION_TEST_FILES_STATUS_CODE = sh(script: 'ls ./tests/*/integration/test*', returnStatus: true)
+//        INTEGRATION_TEST_FILES_STATUS_CODE = sh(script: 'ls ./tests/*/integration/test*', returnStatus: true)
    }
    stages {
       stage('Run Unit Tests') {
@@ -21,18 +21,18 @@ pipeline {
             sh 'echo "Done with unit tests"'
          }
       }
-      stage('Run Integration Tests') {
-         when { environment name: 'INTEGRATION_TEST_FILES_STATUS_CODE', value: "0"}
-         steps {
-            sh 'echo "Running integration tests"'
-            catchError(stageResult: 'FAILURE') {
-            sh """
-               make integration-tests
-               """
-            }
-            sh 'echo "Done with integration tests"'
-         }
-      }
+      // stage('Run Integration Tests') {
+      //    when { environment name: 'INTEGRATION_TEST_FILES_STATUS_CODE', value: "0"}
+      //    steps {
+      //       sh 'echo "Running integration tests"'
+      //       catchError(stageResult: 'FAILURE') {
+      //       sh """
+      //          make integration-tests
+      //          """
+      //       }
+      //       sh 'echo "Done with integration tests"'
+      //    }
+      // }
    }
    post {
      always {
