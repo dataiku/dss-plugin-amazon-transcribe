@@ -166,7 +166,7 @@ class PluginParamsLoader:
         recipe_params = {}
 
         print("test")
-        print(recipe_config)
+        print(self.recipe_config)
         if "language" in self.recipe_config:
             language = self.recipe_config["language"]
             if language not in SUPPORTED_LANGUAGES and language != "":
