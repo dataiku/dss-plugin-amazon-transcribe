@@ -228,7 +228,7 @@
             "description": "Maximum number of speakers to label - any additional will be combined.",
             "type": "INT",
             "mandatory": false,
-            "defaultValue": 2,
+            "defaultValue": 1,
             "visibilityCondition": "model.show_speaker_labels"
         },
         {
