@@ -215,6 +215,60 @@
             "defaultValue": 120
         },
         {
+            "name": "show_speaker_labels",
+            "label": "Show speaker labels",
+            "type": "BOOLEAN",
+            "description": "Display speakers in the JSON output.",
+            "mandatory": false,
+            "defaultValue": false
+        },
+        {
+            "name": "number_of_speakers",
+            "label": "Maximum number of speakers",
+            "description": "Maximum number of speakers to label - any additional will be combined.",
+            "type": "BOOLEAN",
+            "mandatory": false,
+            "defaultValue": false,
+            "visibilityCondition": "model.show_speaker_labels"
+        },
+        {
+            "name": "pii_redaction",
+            "label": "Redact PII",
+            "type": "BOOLEAN",
+            "description": "Redact all PII found.",
+            "mandatory": false,
+            "defaultValue": false
+        },
+        //'BANK_ACCOUNT_NUMBER'|'BANK_ROUTING'|'CREDIT_DEBIT_NUMBER'|'CREDIT_DEBIT_CVV'|'CREDIT_DEBIT_EXPIRY'|'PIN'|'EMAIL'|'ADDRESS'|'NAME'|'PHONE'|'SSN'|'ALL',
+
+        {
+            "name": "pii_types",
+            "label": "PII types",
+            "type": "MULTISELECT",
+            "description": "Select the type of Entities to redact.",
+            "mandatory": false,
+            "defaultValue": false,
+            "selectChoices": [
+                {
+                    "value": "ALL",
+                    "label": "All"
+                },
+                {
+                    "label": "Bank Account Numbers",
+                    "value": "BANK_ACCOUNT_NUMBER"
+                },
+                {
+                    "label": "Names",
+                    "value": "NAME"
+                },
+                {
+                    "label": "Addresses",
+                    "value": "ADDRESS"
+                }
+            ],
+            "visibilityCondition": "model.pii_redaction"
+        },
+        {
           "name": "separator_configuration",
           "label": "Configuration",
           "type": "SEPARATOR"
