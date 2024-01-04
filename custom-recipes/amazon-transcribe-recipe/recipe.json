@@ -245,14 +245,10 @@
             "name": "pii_types",
             "label": "PII types",
             "type": "MULTISELECT",
-            "description": "Select the type of Entities to redact.",
+            "description": "Select the type of Entities to redact - leave blank for all.",
             "mandatory": false,
             "defaultValue": false,
             "selectChoices": [
-                {
-                    "value": "ALL",
-                    "label": "All"
-                },
                 {
                     "label": "Bank Account Numbers",
                     "value": "BANK_ACCOUNT_NUMBER"
