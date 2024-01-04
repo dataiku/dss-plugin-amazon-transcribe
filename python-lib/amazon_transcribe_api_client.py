@@ -140,6 +140,11 @@ class AWSTranscribeAPIWrapper:
                 "ShowSpeakerLabels": True,
                 "MaxSpeakerLabels": 2,
                 "ChannelIdentification": True
+            },
+            "ContentRedaction":{
+                "RedactionType":"PII",
+                "RedactionOutput":"redacted",
+                "PiiEntityTypes":"ALL"
             }
         }
         if language == "auto":
