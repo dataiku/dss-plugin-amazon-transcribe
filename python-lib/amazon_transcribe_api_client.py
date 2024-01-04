@@ -110,6 +110,10 @@ class AWSTranscribeAPIWrapper:
 
     def start_transcription_job(self,
                                 language: AnyStr,
+                                show_speaker_labels: bool,
+                                max_speaker_labels: int,
+                                redact_pii: bool,
+                                pii_types: AnyStr,   
                                 row: Dict = None,
                                 input_folder_bucket: AnyStr = "",
                                 input_folder_root_path: AnyStr = "",
@@ -135,21 +139,18 @@ class AWSTranscribeAPIWrapper:
             "TranscriptionJobName": job_name,
             "Media": {'MediaFileUri': f's3://{input_folder_bucket}/{input_folder_root_path}{audio_path}'},
             "OutputBucketName": output_folder_bucket,
-            "OutputKey": f'{output_folder_root_path}/response/',
-            "Settings":{
-                "ShowSpeakerLabels": True,
-                "MaxSpeakerLabels": 2,
-                "ChannelIdentification": True
-            },
-            "ContentRedaction":{
-                "RedactionType":"PII",
-                "RedactionOutput":"redacted"
-            }
+            "OutputKey": f'{output_folder_root_path}/response/'
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
         else:
             transcribe_request["LanguageCode"] = language
+            
+        if show_speaker_labels:
+            transcribe_request["Settings"]={"ShowSpeakerLabels":True, "MaxSpeakerLabels":max_speaker_labels}
+            
+        if redact_pii:
+            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted"}    
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
@@ -220,7 +221,7 @@ class AWSTranscribeAPIWrapper:
     def get_results(self,
                     submitted_jobs: pd.DataFrame,
                     recipe_job_id: AnyStr,
-                    display_json: bool,
+                    display_json: bool,                 
                     transcript_json_loader: Callable,
                     **kwargs):
 
