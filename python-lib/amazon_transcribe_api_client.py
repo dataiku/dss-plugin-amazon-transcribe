@@ -315,7 +315,7 @@ class AWSTranscribeAPIWrapper:
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
-            job_name="redacted-"+job_name
+#             job_name="redacted-"+job_name
             json_results = transcript_json_loader(folder, job_name)
             try:
                 job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
