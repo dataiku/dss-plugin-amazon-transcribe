@@ -189,7 +189,7 @@ class PluginParamsLoader:
             if "max_speaker_labels" not in self.recipe_config:
                 raise PluginParamValidationError({f"Number of speakers has to be set"})
             elif self.recipe_config["max_speaker_labels"] < 1:
-                raise PluginParamValidationError({f"Speakers has to be larger than one"})
+                raise PluginParamValidationError({f"Speakers has to be more than zero"})
             else:
                 recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
