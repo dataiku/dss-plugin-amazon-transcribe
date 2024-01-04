@@ -165,6 +165,8 @@ class PluginParamsLoader:
         """Validate recipe parameters"""
         recipe_params = {}
 
+        print("test")
+        print(recipe_config)
         if "language" in self.recipe_config:
             language = self.recipe_config["language"]
             if language not in SUPPORTED_LANGUAGES and language != "":
@@ -205,6 +207,7 @@ class PluginParamsLoader:
                     recipe_params["pii_types"] = pii_types
                         
         logging.info(f"Validated recipe parameters: {recipe_params}")
+        sdf
         return recipe_params
 
     def validate_load_params(self) -> PluginParams:
