@@ -19,6 +19,7 @@ from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 
 from dku_constants import SUPPORTED_LANGUAGES
 from dku_constants import SUPPORTED_AUDIO_FORMATS
+from dku_constants import SUPPORTED_PII_TYPES
 
 # TODO
 DOC_URL = "https://www.dataiku.com/product/plugins/.../"
@@ -182,9 +183,21 @@ class PluginParamsLoader:
                 raise PluginParamValidationError({f"Timeout has to be larger than zero"})
             else:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
+        
+        if recipe_params["show_speaker_labels"]:
+            if "max_speaker_labels" not in self.recipe_config:
+                raise PluginParamValidationError({f"Number of speakers has to be set"})
+            elif self.recipe_config["max_speaker_labels"] < 1:
+                raise PluginParamValidationError({f"Speakers has to be larger than one"})
+            else:
+                recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
-        if 
-                
+        if recipe_params["redact_pii"]:
+            pii_types = self.recipe_config["pii_types"]
+            if len(pii_types.intersection(SUPPORTED_LANGUAGES) > 0) and pii_types != "":
+                raise PluginParamValidationError({f"Invalid PII type"})
+            recipe_params["pii_types"] = pii_types
+        
                 
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
