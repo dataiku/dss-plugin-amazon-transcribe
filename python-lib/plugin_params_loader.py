@@ -62,8 +62,8 @@ class PluginParams:
             display_json: bool = False,
             show_speaker_labels: bool = True,
             max_speaker_labels: int = 2,
-            redact_pii: bool: True,
-            pii_types: AnyStr = "ALL"
+            redact_pii: bool = True,
+            pii_types: AnyStr = "ALL",
             timeout_min: int = 120,
             use_timeout: bool = True,
             parallel_workers: int = 4,
@@ -194,9 +194,12 @@ class PluginParamsLoader:
 
         if recipe_params["redact_pii"]:
             pii_types = self.recipe_config["pii_types"]
-            if len(pii_types.intersection(SUPPORTED_LANGUAGES) > 0) and pii_types != "":
+            if pii_types == "":
+                recipe_params["pii_types"]='ALL'
+            elif len(pii_types.intersection(SUPPORTED_PII_TYPES) > 0) and pii_types != "":
                 raise PluginParamValidationError({f"Invalid PII type"})
-            recipe_params["pii_types"] = pii_types
+            else:
+                recipe_params["pii_types"] = pii_types
         
                 
         logging.info(f"Validated recipe parameters: {recipe_params}")
