@@ -184,8 +184,8 @@ class PluginParamsLoader:
             else:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
         
-        recipe_params["show_speaker_labels"] = "show_speaker_labels" in self.recipe_config
-        if recipe_params["show_speaker_labels"]:
+        if "show_speaker_labels" in self.recipe_config:
+            recipe_params["show_speaker_labels"] = "show_speaker_labels" in self.recipe_config
             if "max_speaker_labels" not in self.recipe_config:
                 raise PluginParamValidationError({f"Number of speakers has to be set"})
             elif self.recipe_config["max_speaker_labels"] < 1:
@@ -193,17 +193,17 @@ class PluginParamsLoader:
             else:
                 recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
-        recipe_params["redact_pii"] = "redact_pii" in self.recipe_config
-        if recipe_params["redact_pii"]:
-            pii_types = self.recipe_config["pii_types"]
-            if pii_types == "":
-                recipe_params["pii_types"]='ALL'
-            elif len(pii_types.intersection(SUPPORTED_PII_TYPES) > 0) and pii_types != "":
-                raise PluginParamValidationError({f"Invalid PII type"})
-            else:
-                recipe_params["pii_types"] = pii_types
-        
-                
+        if "redact_pii" in self.recipe_config:
+            recipe_params["redact_pii"] = "redact_pii" in self.recipe_config
+            if recipe_params["redact_pii"]:
+                pii_types = self.recipe_config["pii_types"]
+                if pii_types == "":
+                    recipe_params["pii_types"]='ALL'
+                elif len(pii_types.intersection(SUPPORTED_PII_TYPES) > 0) and pii_types != "":
+                    raise PluginParamValidationError({f"Invalid PII type"})
+                else:
+                    recipe_params["pii_types"] = pii_types
+                        
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
 
