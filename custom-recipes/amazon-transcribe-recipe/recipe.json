@@ -223,7 +223,7 @@
             "defaultValue": false
         },
         {
-            "name": "number_of_speakers",
+            "name": "max_speaker_labels",
             "label": "Maximum number of speakers",
             "description": "Maximum number of speakers to label - any additional will be combined.",
             "type": "INT",
@@ -232,7 +232,7 @@
             "visibilityCondition": "model.show_speaker_labels"
         },
         {
-            "name": "pii_redaction",
+            "name": "redact_pii",
             "label": "Redact PII",
             "type": "BOOLEAN",
             "description": "Redact all PII found.",

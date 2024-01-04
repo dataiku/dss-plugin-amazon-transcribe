@@ -59,6 +59,10 @@ class PluginParams:
             output_folder_root_path: AnyStr = "",
             language: AnyStr = "auto",
             display_json: bool = False,
+            show_speaker_labels: bool = True,
+            max_speaker_labels: int = 2,
+            redact_pii: bool: True,
+            pii_types: AnyStr = "ALL"
             timeout_min: int = 120,
             use_timeout: bool = True,
             parallel_workers: int = 4,
@@ -179,7 +183,9 @@ class PluginParamsLoader:
             else:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
 
-
+        if 
+                
+                
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
 
