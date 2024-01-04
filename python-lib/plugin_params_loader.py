@@ -194,7 +194,7 @@ class PluginParamsLoader:
                 recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
         if "redact_pii" in self.recipe_config:
-            recipe_params["redact_pii"] = "redact_pii" in self.recipe_config
+            recipe_params["redact_pii"] = self.recipe_config["redact_pii"]
             if recipe_params["redact_pii"]:
                 pii_types = self.recipe_config["pii_types"]
                 if pii_types == "":
