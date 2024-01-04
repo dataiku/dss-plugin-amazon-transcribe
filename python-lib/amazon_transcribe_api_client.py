@@ -135,7 +135,9 @@ class AWSTranscribeAPIWrapper:
             "TranscriptionJobName": job_name,
             "Media": {'MediaFileUri': f's3://{input_folder_bucket}/{input_folder_root_path}{audio_path}'},
             "OutputBucketName": output_folder_bucket,
-            "OutputKey": f'{output_folder_root_path}/response/'
+            "OutputKey": f'{output_folder_root_path}/response/',
+            "ShowSpeakerLabels": True,
+            "MaxSpeakerLabels": 2
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
