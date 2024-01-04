@@ -184,6 +184,7 @@ class PluginParamsLoader:
             else:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
         
+        recipe_params["show_speaker_labels"] = "show_speaker_labels" in self.recipe_config
         if recipe_params["show_speaker_labels"]:
             if "max_speaker_labels" not in self.recipe_config:
                 raise PluginParamValidationError({f"Number of speakers has to be set"})
@@ -192,6 +193,7 @@ class PluginParamsLoader:
             else:
                 recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
+        recipe_params["redact_pii"] = "redact_pii" in self.recipe_config
         if recipe_params["redact_pii"]:
             pii_types = self.recipe_config["pii_types"]
             if pii_types == "":
