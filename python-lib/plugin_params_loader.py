@@ -165,8 +165,6 @@ class PluginParamsLoader:
         """Validate recipe parameters"""
         recipe_params = {}
 
-        print("test")
-        print(self.recipe_config)
         if "language" in self.recipe_config:
             language = self.recipe_config["language"]
             if language not in SUPPORTED_LANGUAGES and language != "":
@@ -187,7 +185,7 @@ class PluginParamsLoader:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
         
         if "show_speaker_labels" in self.recipe_config:
-            recipe_params["show_speaker_labels"] = "show_speaker_labels" in self.recipe_config
+            recipe_params["show_speaker_labels"] = self.recipe_config["show_speaker_labels"]
             if "max_speaker_labels" not in self.recipe_config:
                 raise PluginParamValidationError({f"Number of speakers has to be set"})
             elif self.recipe_config["max_speaker_labels"] < 1:
