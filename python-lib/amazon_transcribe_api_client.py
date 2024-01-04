@@ -145,7 +145,10 @@ class AWSTranscribeAPIWrapper:
                 "RedactionType":"PII",
                 "RedactionOutput":"redacted",
                 "PiiEntityTypes":"ALL"
-            }
+            },
+            "tags":[{'Key':'filename', 
+                     'Value':'{audio_path}'
+                    }]
         }
         if language == "auto":
             transcribe_request["IdentifyLanguage"] = True
