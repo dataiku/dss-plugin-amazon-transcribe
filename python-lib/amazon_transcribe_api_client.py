@@ -146,7 +146,7 @@ class AWSTranscribeAPIWrapper:
                 "RedactionOutput":"redacted",
                 "PiiEntityTypes":"ALL"
             },
-            "tags":[{'Key':'filename', 
+            "Tags":[{'Key':'filename', 
                      'Value':'{audio_path}'
                     }]
         }
