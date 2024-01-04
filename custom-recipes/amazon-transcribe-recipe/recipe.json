@@ -226,9 +226,9 @@
             "name": "number_of_speakers",
             "label": "Maximum number of speakers",
             "description": "Maximum number of speakers to label - any additional will be combined.",
-            "type": "BOOLEAN",
+            "type": "INT",
             "mandatory": false,
-            "defaultValue": false,
+            "defaultValue": 2,
             "visibilityCondition": "model.show_speaker_labels"
         },
         {
