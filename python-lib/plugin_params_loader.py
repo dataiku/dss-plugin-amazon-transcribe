@@ -205,7 +205,6 @@ class PluginParamsLoader:
                     recipe_params["pii_types"] = pii_types
                         
         logging.info(f"Validated recipe parameters: {recipe_params}")
-        sdf
         return recipe_params
 
     def validate_load_params(self) -> PluginParams:
