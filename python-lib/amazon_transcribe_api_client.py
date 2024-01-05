@@ -149,8 +149,8 @@ class AWSTranscribeAPIWrapper:
         if show_speaker_labels:
             transcribe_request["Settings"]={"ShowSpeakerLabels":True, "MaxSpeakerLabels":max_speaker_labels}
             
-        if redact_pii:
-            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted"}    
+        if redact_pii:            
+            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted", "PiiEntityTypes":'|'.join(pii_types)}    
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
