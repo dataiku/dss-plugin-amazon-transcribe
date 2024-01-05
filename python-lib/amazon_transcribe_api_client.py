@@ -221,7 +221,8 @@ class AWSTranscribeAPIWrapper:
     def get_results(self,
                     submitted_jobs: pd.DataFrame,
                     recipe_job_id: AnyStr,
-                    display_json: bool,                 
+                    display_json: bool,
+                    redact_pii: bool,
                     transcript_json_loader: Callable,
                     **kwargs):
 
@@ -256,6 +257,7 @@ class AWSTranscribeAPIWrapper:
                 if job_name not in res:
                     job_data = self._result_parser(path=submitted_jobs_dict[job_name]["path"],
                                                    display_json=display_json,
+                                                   redact_pii=redact_pii,
                                                    job=job,
                                                    transcript_json_loader=transcript_json_loader,
                                                    **kwargs)
@@ -279,6 +281,7 @@ class AWSTranscribeAPIWrapper:
                        path: str,
                        job: dict,
                        display_json: bool,
+                       redact_pii: bool,
                        transcript_json_loader: Callable,
                        **kwargs):
         """
@@ -315,7 +318,8 @@ class AWSTranscribeAPIWrapper:
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
-#             job_name="redacted-"+job_name
+            if redact_pii: 
+                job_name="redacted-"+job_name
             json_results = transcript_json_loader(folder, job_name)
             try:
                 job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")
