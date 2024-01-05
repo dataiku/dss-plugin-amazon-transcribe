@@ -239,6 +239,7 @@
             "mandatory": false,
             "defaultValue": false
         },
+        // when boto is updated the following will be available
         //'BANK_ACCOUNT_NUMBER'|'BANK_ROUTING'|'CREDIT_DEBIT_NUMBER'|'CREDIT_DEBIT_CVV'|'CREDIT_DEBIT_EXPIRY'|'PIN'|'EMAIL'|'ADDRESS'|'NAME'|'PHONE'|'SSN'|'ALL',
 
         {
@@ -254,12 +255,44 @@
                     "value": "BANK_ACCOUNT_NUMBER"
                 },
                 {
-                    "label": "Names",
-                    "value": "NAME"
+                    "label": "Bank Routing",
+                    "value": "BANK_ROUTING"
+                },
+                {
+                    "label": "Credit/Debit Card Numbers",
+                    "value": "CREDIT_DEBIT_NUMBER"
+                },
+                {
+                    "label": "Credit/Debit CVV",
+                    "value": "CREDIT_DEBIT_CVV"
+                },
+                {
+                    "label": "Credit/Debit Expiry",
+                    "value": "CREDIT_DEBIT_EXPIRY"
+                },
+                {
+                    "label": "PIN",
+                    "value": "PIN"
+                },
+                {
+                    "label": "Email",
+                    "value": "EMAIL"
                 },
                 {
                     "label": "Addresses",
                     "value": "ADDRESS"
+                },
+                {
+                    "label": "Names",
+                    "value": "NAME"
+                },                
+                {
+                    "label": "Phone Numbers",
+                    "value": "PHONE"
+                },
+                {
+                    "label": "Social Security Numbers",
+                    "value": "SSN"
                 }
             ],
             "visibilityCondition": "model.pii_redaction"
