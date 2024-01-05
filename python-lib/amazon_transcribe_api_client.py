@@ -151,7 +151,7 @@ class AWSTranscribeAPIWrapper:
             
         if redact_pii:            
 #             '|'.join(pii_types)
-            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted", "PiiEntityTypes":pii_types}    
+            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted", "PiiEntityTypes":list(pii_types)}    
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
