@@ -63,7 +63,7 @@ class PluginParams:
             show_speaker_labels: bool = False,
             max_speaker_labels: int = 0,
             redact_pii: bool = False,
-            pii_types: AnyStr = "",
+            pii_types: AnyStr = "ALL",
             timeout_min: int = 120,
             use_timeout: bool = True,
             parallel_workers: int = 4,
