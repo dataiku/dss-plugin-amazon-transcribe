@@ -150,7 +150,6 @@ class AWSTranscribeAPIWrapper:
             transcribe_request["Settings"]={"ShowSpeakerLabels":True, "MaxSpeakerLabels":max_speaker_labels}
             
         if redact_pii:            
-#             '|'.join(pii_types)
             transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted", "PiiEntityTypes":list(pii_types)}    
 
         try:
