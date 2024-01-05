@@ -199,10 +199,10 @@ class PluginParamsLoader:
                 pii_types = self.recipe_config["pii_types"]
                 if pii_types == "":
                     recipe_params["pii_types"]='ALL'
-                elif len(set(pii_types).intersection(SUPPORTED_PII_TYPES)) > 0:
+                elif len(set(pii_types).intersection(SUPPORTED_PII_TYPES)) == 0:
                     raise PluginParamValidationError({f"Invalid PII types: {pii_types}"})
                 else:
-                    recipe_params["pii_types"] = pii_types
+                    recipe_params["pii_types"] = set(pii_types).intersection(SUPPORTED_PII_TYPES)
                         
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
