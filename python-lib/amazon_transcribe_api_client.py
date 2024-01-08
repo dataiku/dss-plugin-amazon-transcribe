@@ -110,6 +110,10 @@ class AWSTranscribeAPIWrapper:
 
     def start_transcription_job(self,
                                 language: AnyStr,
+                                show_speaker_labels: bool,
+                                max_speaker_labels: int,
+                                redact_pii: bool,
+                                pii_types: AnyStr,   
                                 row: Dict = None,
                                 input_folder_bucket: AnyStr = "",
                                 input_folder_root_path: AnyStr = "",
@@ -141,6 +145,12 @@ class AWSTranscribeAPIWrapper:
             transcribe_request["IdentifyLanguage"] = True
         else:
             transcribe_request["LanguageCode"] = language
+            
+        if show_speaker_labels:
+            transcribe_request["Settings"]={"ShowSpeakerLabels":True, "MaxSpeakerLabels":max_speaker_labels}
+            
+        if redact_pii:            
+            transcribe_request["ContentRedaction"]={"RedactionType":"PII", "RedactionOutput":"redacted", "PiiEntityTypes":list(pii_types)}    
 
         try:
             response = self.client.start_transcription_job(**transcribe_request)
@@ -212,6 +222,7 @@ class AWSTranscribeAPIWrapper:
                     submitted_jobs: pd.DataFrame,
                     recipe_job_id: AnyStr,
                     display_json: bool,
+                    redact_pii: bool,
                     transcript_json_loader: Callable,
                     **kwargs):
 
@@ -246,6 +257,7 @@ class AWSTranscribeAPIWrapper:
                 if job_name not in res:
                     job_data = self._result_parser(path=submitted_jobs_dict[job_name]["path"],
                                                    display_json=display_json,
+                                                   redact_pii=redact_pii,
                                                    job=job,
                                                    transcript_json_loader=transcript_json_loader,
                                                    **kwargs)
@@ -269,6 +281,7 @@ class AWSTranscribeAPIWrapper:
                        path: str,
                        job: dict,
                        display_json: bool,
+                       redact_pii: bool,
                        transcript_json_loader: Callable,
                        **kwargs):
         """
@@ -305,6 +318,8 @@ class AWSTranscribeAPIWrapper:
         elif job_status == AWSTranscribeAPIWrapper.COMPLETED:
 
             # Result json is being read by function. The Transcript will be there.
+            if redact_pii: 
+                job_name="redacted-"+job_name
             json_results = transcript_json_loader(folder, job_name)
             try:
                 job_data["transcript"] = json_results.get("results").get("transcripts")[0].get("transcript")

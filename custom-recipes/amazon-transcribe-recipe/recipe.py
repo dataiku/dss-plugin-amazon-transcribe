@@ -36,11 +36,16 @@ submitted_jobs = parallelizer.run(df=params.input_df,
                                   output_folder_bucket=params.output_folder_bucket,
                                   output_folder_root_path=params.output_folder_root_path,
                                   job_id=RECIPE_JOB_ID,
-                                  language=params.language)
+                                  language=params.language,
+                                  show_speaker_labels=params.show_speaker_labels,
+                                  max_speaker_labels=params.max_speaker_labels,
+                                  redact_pii=params.redact_pii,
+                                  pii_types=params.pii_types)
 
 job_results = api_wrapper.get_results(submitted_jobs=submitted_jobs,
                                       recipe_job_id=RECIPE_JOB_ID,
                                       display_json=params.display_json,
+                                      redact_pii=params.redact_pii,
                                       transcript_json_loader=read_json_from_folder,
                                       folder=params.output_folder)
 

@@ -19,6 +19,7 @@ from amazon_transcribe_api_client import AWSTranscribeAPIWrapper
 
 from dku_constants import SUPPORTED_LANGUAGES
 from dku_constants import SUPPORTED_AUDIO_FORMATS
+from dku_constants import SUPPORTED_PII_TYPES
 
 # TODO
 DOC_URL = "https://www.dataiku.com/product/plugins/.../"
@@ -59,6 +60,10 @@ class PluginParams:
             output_folder_root_path: AnyStr = "",
             language: AnyStr = "auto",
             display_json: bool = False,
+            show_speaker_labels: bool = False,
+            max_speaker_labels: int = 0,
+            redact_pii: bool = False,
+            pii_types: AnyStr = "ALL",
             timeout_min: int = 120,
             use_timeout: bool = True,
             parallel_workers: int = 4,
@@ -178,8 +183,27 @@ class PluginParamsLoader:
                 raise PluginParamValidationError({f"Timeout has to be larger than zero"})
             else:
                 recipe_params["timeout_min"] = self.recipe_config["timeout_min"]
+        
+        if "show_speaker_labels" in self.recipe_config:
+            recipe_params["show_speaker_labels"] = self.recipe_config["show_speaker_labels"]
+            if "max_speaker_labels" not in self.recipe_config:
+                raise PluginParamValidationError({f"Number of speakers has to be set"})
+            elif self.recipe_config["max_speaker_labels"] < 1:
+                raise PluginParamValidationError({f"Speakers has to be more than zero"})
+            else:
+                recipe_params["max_speaker_labels"] = self.recipe_config["max_speaker_labels"]
 
-
+        if "redact_pii" in self.recipe_config:
+            recipe_params["redact_pii"] = self.recipe_config["redact_pii"]
+            if recipe_params["redact_pii"]:
+                pii_types = self.recipe_config["pii_types"]
+                if pii_types == "":
+                    recipe_params["pii_types"]='ALL'
+                elif len(set(pii_types).intersection(SUPPORTED_PII_TYPES)) == 0:
+                    raise PluginParamValidationError({f"Invalid PII types: {pii_types}"})
+                else:
+                    recipe_params["pii_types"] = set(pii_types).intersection(SUPPORTED_PII_TYPES)
+                        
         logging.info(f"Validated recipe parameters: {recipe_params}")
         return recipe_params
 
