@@ -27,7 +27,7 @@ def generate_path_df(folder: dataiku.Folder, file_extensions: List[AnyStr], path
         DataFrame with one column named `path_column` with all the file paths matching the list of `file_extensions`
 
     Raises:
-        RuntimeError: If there are not files matching the list of `file_extensions`
+        RuntimeError: If there are no files matching the list of `file_extensions`
 
     """
     path_list = []
