@@ -50,7 +50,7 @@ def generate_unique(name: AnyStr, existing_names: List, prefix: AnyStr) -> AnySt
         if new_name not in existing_names:
             return new_name
         new_name = f"{name}_{i}"
-    raise RuntimeError(f"Failed to generated a unique name for '{name}'")
+    raise RuntimeError(f"Failed to generate a unique name for '{name}'")
 
 
 def build_unique_column_names(existing_names: List[AnyStr], column_prefix: AnyStr) -> NamedTuple:
