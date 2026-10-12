@@ -1,19 +1,19 @@
 {
-    "id": "amazon-transcribe",
-    "version": "1.1.0",
-    "meta": {
-        "label": "Amazon Transcribe",
-        "category": "Natural Language Processing",
-        "description": "Amazon Transcribe plugin. The plugin takes audio files from a folder connected to Amazon S3 and make its transcription through Amazon Transcribe.",
-        "author": "Dataiku (Jeremy PLASSMANN)",
-        "icon": "icon-volume-up",
-        "licenseInfo": "Apache Software License",
-        "url": "https://www.dataiku.com/product/plugins/amazon-transcribe/",
-        "tags": [
-            "Cloud",
-            "AWS",
-            "NLP"
-        ],
-        "supportLevel": "NOT_SUPPORTED"
-    }
+  "id": "amazon-transcribe",
+  "version": "1.2.0",
+  "meta": {
+    "label": "Amazon Transcribe",
+    "category": "Natural Language Processing",
+    "description": "Amazon Transcribe plugin. The plugin takes audio files from a folder connected to Amazon S3 and make its transcription through Amazon Transcribe.",
+    "author": "Dataiku (Jeremy PLASSMANN)",
+    "icon": "icon-volume-up",
+    "licenseInfo": "Apache Software License",
+    "url": "https://www.dataiku.com/product/plugins/amazon-transcribe/",
+    "tags": [
+      "Cloud",
+      "AWS",
+      "NLP"
+    ],
+    "supportLevel": "NOT_SUPPORTED"
+  }
 }
